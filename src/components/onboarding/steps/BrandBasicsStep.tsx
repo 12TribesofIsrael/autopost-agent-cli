@@ -7,12 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 
 const industries = [
-  { value: 'boxing', label: 'Boxing / Combat Sports' },
-  { value: 'fitness', label: 'Fitness / Gym' },
-  { value: 'food', label: 'Food & Restaurant' },
-  { value: 'retail', label: 'Retail / Storefront' },
-  { value: 'beauty', label: 'Beauty / Salon' },
-  { value: 'other', label: 'Other local business' },
+  { value: 'boxing_combat_sports', label: 'Boxing / Combat Sports' },
+  { value: 'fitness_gym', label: 'Fitness / Gym' },
+  { value: 'food_restaurant', label: 'Food & Restaurant' },
+  { value: 'retail_storefront', label: 'Retail / Storefront' },
+  { value: 'beauty_salon', label: 'Beauty / Salon' },
+  { value: 'other_local_business', label: 'Other local business' },
 ];
 
 const postingGoals = [

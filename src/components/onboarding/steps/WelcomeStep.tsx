@@ -5,10 +5,10 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 const businessTypes = [
-  { id: 'boxer', label: 'Pro Boxer / Amateur Fighter', icon: '🥊' },
-  { id: 'gym', label: 'Boxing Gym / Fitness Studio', icon: '🏋️' },
-  { id: 'restaurant', label: 'Local Restaurant / Food Business', icon: '🍽️' },
-  { id: 'other', label: 'Other Local Business', icon: '🏪' },
+  { id: 'boxer_fighter', label: 'Pro Boxer / Amateur Fighter', icon: '🥊' },
+  { id: 'gym_studio', label: 'Boxing Gym / Fitness Studio', icon: '🏋️' },
+  { id: 'restaurant_food', label: 'Local Restaurant / Food Business', icon: '🍽️' },
+  { id: 'other_local_business', label: 'Other Local Business', icon: '🏪' },
 ];
 
 export function WelcomeStep() {
