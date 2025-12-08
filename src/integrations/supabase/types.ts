@@ -14,7 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          brand_voice: string | null
+          business_name: string | null
+          created_at: string | null
+          id: string
+          industry: Database["public"]["Enums"]["industry"] | null
+          onboarding_completed: boolean | null
+          onboarding_step: number | null
+          posting_goals: string[] | null
+          updated_at: string | null
+          user_type: Database["public"]["Enums"]["user_type"] | null
+          website_url: string | null
+        }
+        Insert: {
+          brand_voice?: string | null
+          business_name?: string | null
+          created_at?: string | null
+          id: string
+          industry?: Database["public"]["Enums"]["industry"] | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
+          posting_goals?: string[] | null
+          updated_at?: string | null
+          user_type?: Database["public"]["Enums"]["user_type"] | null
+          website_url?: string | null
+        }
+        Update: {
+          brand_voice?: string | null
+          business_name?: string | null
+          created_at?: string | null
+          id?: string
+          industry?: Database["public"]["Enums"]["industry"] | null
+          onboarding_completed?: boolean | null
+          onboarding_step?: number | null
+          posting_goals?: string[] | null
+          updated_at?: string | null
+          user_type?: Database["public"]["Enums"]["user_type"] | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      social_connections: {
+        Row: {
+          access_token: string | null
+          connected: boolean | null
+          connected_at: string | null
+          created_at: string | null
+          handle: string | null
+          id: string
+          platform: string
+          refresh_token: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          connected?: boolean | null
+          connected_at?: string | null
+          created_at?: string | null
+          handle?: string | null
+          id?: string
+          platform: string
+          refresh_token?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          connected?: boolean | null
+          connected_at?: string | null
+          created_at?: string | null
+          handle?: string | null
+          id?: string
+          platform?: string
+          refresh_token?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_connections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_settings: {
+        Row: {
+          auto_publish: boolean | null
+          created_at: string | null
+          id: string
+          posting_frequency:
+            | Database["public"]["Enums"]["posting_frequency"]
+            | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_publish?: boolean | null
+          created_at?: string | null
+          id?: string
+          posting_frequency?:
+            | Database["public"]["Enums"]["posting_frequency"]
+            | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_publish?: boolean | null
+          created_at?: string | null
+          id?: string
+          posting_frequency?:
+            | Database["public"]["Enums"]["posting_frequency"]
+            | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflows: {
+        Row: {
+          created_at: string | null
+          destination_platform: string
+          enabled: boolean | null
+          id: string
+          source_platform: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          destination_platform: string
+          enabled?: boolean | null
+          id?: string
+          source_platform: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          destination_platform?: string
+          enabled?: boolean | null
+          id?: string
+          source_platform?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflows_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +190,19 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      industry:
+        | "boxing_combat_sports"
+        | "fitness_gym"
+        | "food_restaurant"
+        | "retail_storefront"
+        | "beauty_salon"
+        | "other_local_business"
+      posting_frequency: "few_times_week" | "daily" | "multiple_per_day"
+      user_type:
+        | "boxer_fighter"
+        | "gym_studio"
+        | "restaurant_food"
+        | "other_local_business"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +329,22 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      industry: [
+        "boxing_combat_sports",
+        "fitness_gym",
+        "food_restaurant",
+        "retail_storefront",
+        "beauty_salon",
+        "other_local_business",
+      ],
+      posting_frequency: ["few_times_week", "daily", "multiple_per_day"],
+      user_type: [
+        "boxer_fighter",
+        "gym_studio",
+        "restaurant_food",
+        "other_local_business",
+      ],
+    },
   },
 } as const
