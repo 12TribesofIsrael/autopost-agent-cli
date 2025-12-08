@@ -1,19 +1,100 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { X, Sparkles, Plus, Settings, BarChart3, Video, Clock } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { X, Sparkles, Plus, Settings, BarChart3, Video, Clock, LogOut, Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+
+interface DashboardData {
+  businessName: string;
+  mainPlatform: string;
+  connectedPlatforms: number;
+  workflowsActive: number;
+}
 
 export default function Dashboard() {
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading, signOut } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const onboardingComplete = localStorage.getItem('onboardingComplete');
-    if (onboardingComplete === 'true') {
-      setShowWelcomeBanner(true);
-      // Clear the flag so banner only shows once
-      localStorage.removeItem('onboardingComplete');
+    if (!authLoading && !user) {
+      navigate('/auth');
     }
-  }, []);
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadDashboardData = async () => {
+      try {
+        // Load profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('business_name, onboarding_completed')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profile && !profile.onboarding_completed) {
+          navigate('/onboarding');
+          return;
+        }
+
+        // Show welcome banner for newly completed onboarding
+        const justCompleted = localStorage.getItem('onboardingComplete');
+        if (justCompleted === 'true') {
+          setShowWelcomeBanner(true);
+          localStorage.removeItem('onboardingComplete');
+        }
+
+        // Load connected platforms count
+        const { data: connections } = await supabase
+          .from('social_connections')
+          .select('platform, connected')
+          .eq('user_id', user.id)
+          .eq('connected', true);
+
+        // Load workflows
+        const { data: workflows } = await supabase
+          .from('workflows')
+          .select('source_platform, enabled')
+          .eq('user_id', user.id)
+          .eq('enabled', true);
+
+        setDashboardData({
+          businessName: profile?.business_name || 'Your Business',
+          mainPlatform: workflows?.[0]?.source_platform || 'your main platform',
+          connectedPlatforms: connections?.length || 0,
+          workflowsActive: workflows?.length || 0,
+        });
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [user, navigate]);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen">
@@ -29,6 +110,10 @@ export default function Dashboard() {
             <Button variant="ghost" size="sm" className="gap-2">
               <Settings className="w-4 h-4" />
               Settings
+            </Button>
+            <Button variant="ghost" size="sm" className="gap-2" onClick={handleSignOut}>
+              <LogOut className="w-4 h-4" />
+              Sign Out
             </Button>
           </div>
         </div>
@@ -48,7 +133,7 @@ export default function Dashboard() {
                     🎉 Setup Complete
                   </h2>
                   <p className="text-muted-foreground mt-1">
-                    Your workflows are live. Post on your main platform or click "Create New Post" to let Autopost Agent push it everywhere.
+                    Your workflows are live. Post on {dashboardData?.mainPlatform} or click "Create New Post" to let Autopost Agent push it everywhere.
                   </p>
                   <Button className="mt-4 gradient-primary glow-primary gap-2">
                     <Plus className="w-4 h-4" />
@@ -70,7 +155,9 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground">Welcome back! Here's your content overview.</p>
+            <p className="text-muted-foreground">
+              Welcome back{dashboardData?.businessName ? `, ${dashboardData.businessName}` : ''}! Here's your content overview.
+            </p>
           </div>
           <Button className="gradient-primary glow-primary gap-2">
             <Plus className="w-4 h-4" />
@@ -97,7 +184,7 @@ export default function Dashboard() {
               </div>
               <span className="text-muted-foreground">Platforms Active</span>
             </div>
-            <p className="text-3xl font-bold">0</p>
+            <p className="text-3xl font-bold">{dashboardData?.connectedPlatforms || 0}</p>
           </div>
 
           <div className="p-6 rounded-xl border border-border/50 bg-card">
@@ -105,9 +192,9 @@ export default function Dashboard() {
               <div className="p-2 rounded-lg bg-accent/10">
                 <Clock className="w-5 h-5 text-accent" />
               </div>
-              <span className="text-muted-foreground">Scheduled</span>
+              <span className="text-muted-foreground">Workflows Active</span>
             </div>
-            <p className="text-3xl font-bold">0</p>
+            <p className="text-3xl font-bold">{dashboardData?.workflowsActive || 0}</p>
           </div>
         </div>
 
