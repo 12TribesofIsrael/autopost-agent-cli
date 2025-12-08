@@ -25,7 +25,7 @@ const platformConfigs = {
 const frequencies = [
   { value: 'few_times_week', label: 'A few times a week' },
   { value: 'daily', label: 'Daily' },
-  { value: 'multiple_daily', label: 'Multiple times per day' },
+  { value: 'multiple_per_day', label: 'Multiple times per day' },
 ];
 
 export function WorkflowsStep() {
