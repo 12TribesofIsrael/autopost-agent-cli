@@ -1,6 +1,6 @@
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { Button } from '@/components/ui/button';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const stepLabels = [
@@ -16,12 +16,11 @@ interface WizardLayoutProps {
 }
 
 export function WizardLayout({ children }: WizardLayoutProps) {
-  const { currentStep, totalSteps } = useOnboarding();
+  const { currentStep, totalSteps, saveProgress, saving } = useOnboarding();
   const navigate = useNavigate();
 
-  const handleSaveAndExit = () => {
-    // In a real app, save progress to localStorage or backend
-    localStorage.setItem('onboardingProgress', JSON.stringify({ step: currentStep }));
+  const handleSaveAndExit = async () => {
+    await saveProgress();
     navigate('/dashboard');
   };
 
@@ -47,7 +46,13 @@ export function WizardLayout({ children }: WizardLayoutProps) {
           </div>
 
           {/* Right: Save & Exit */}
-          <Button variant="ghost" onClick={handleSaveAndExit} className="text-muted-foreground hover:text-foreground">
+          <Button 
+            variant="ghost" 
+            onClick={handleSaveAndExit} 
+            className="text-muted-foreground hover:text-foreground"
+            disabled={saving}
+          >
+            {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Save & Exit
           </Button>
         </div>

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   const scrollToHow = () => {
@@ -22,14 +23,14 @@ const Hero = () => {
             </p>
             <div className="mb-4 flex flex-wrap gap-3">
               <Button asChild>
-                <a href="#get-started">Start with one video</a>
+                <Link to="/auth">Get Started</Link>
               </Button>
               <Button variant="outline" onClick={scrollToHow}>
                 See how it works
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              No login needed for this MVP – just drop your video link and go.
+              Free to start – set up your workflows in minutes.
             </p>
           </div>
 

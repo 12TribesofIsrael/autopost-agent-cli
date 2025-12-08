@@ -12,7 +12,8 @@ import { Check, AlertTriangle, Loader2, Sparkles } from 'lucide-react';
 type TestStatus = 'idle' | 'processing' | 'success' | 'error';
 
 export function AutoPublishStep() {
-  const { data, updateData } = useOnboarding();
+  const { data, updateData, completeOnboarding, saving } = useOnboarding();
+
   const navigate = useNavigate();
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [errorPlatform, setErrorPlatform] = useState<string | null>(null);
@@ -35,7 +36,8 @@ export function AutoPublishStep() {
     }
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    await completeOnboarding();
     localStorage.setItem('onboardingComplete', 'true');
     navigate('/dashboard');
   };
@@ -201,7 +203,8 @@ export function AutoPublishStep() {
 
       <WizardNavigation
         onContinue={handleFinish}
-        continueLabel="Finish Setup"
+        continueLabel={saving ? "Saving..." : "Finish Setup"}
+        disableContinue={saving}
       />
     </div>
   );

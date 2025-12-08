@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Navigation = () => {
   return (
     <header className="sticky top-0 z-50 glass border-b border-border/40">
       <div className="container flex items-center justify-between py-4">
-        <div className="text-xl font-bold tracking-tight">
+        <Link to="/" className="text-xl font-bold tracking-tight">
           Autopost<span className="text-primary">Agent</span>
-        </div>
+        </Link>
         <nav className="hidden items-center gap-6 md:flex">
           <a
             href="#how"
@@ -21,7 +22,7 @@ const Navigation = () => {
             Pricing
           </a>
           <Button variant="nav" size="sm" asChild>
-            <a href="#get-started">Get started</a>
+            <Link to="/auth">Get started</Link>
           </Button>
         </nav>
       </div>
