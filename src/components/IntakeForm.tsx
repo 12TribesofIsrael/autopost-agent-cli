@@ -15,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Check, Loader2 } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 
 const platforms = [
   { id: "tiktok", label: "TikTok" },
@@ -37,7 +36,6 @@ type FormData = z.infer<typeof formSchema>;
 
 const IntakeForm = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -75,33 +73,27 @@ const IntakeForm = () => {
       return;
     }
 
-    if (!user) {
-      toast({
-        title: "Please sign in",
-        description: "You need to be logged in to submit a video request.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("video_requests").insert({
-        user_id: user.id,
-        name: result.data.name,
-        email: result.data.email,
-        video_link: result.data.videoLink,
-        platforms: result.data.platforms,
-        frequency: result.data.frequency,
-        notes: result.data.notes || null,
+      const response = await supabase.functions.invoke("submit-request", {
+        body: {
+          name: result.data.name,
+          email: result.data.email,
+          videoLink: result.data.videoLink,
+          platforms: result.data.platforms,
+          frequency: result.data.frequency,
+          notes: result.data.notes || null,
+        },
       });
 
-      if (error) throw error;
+      if (response.error || !response.data?.success) {
+        throw new Error(response.data?.error || response.error?.message || "Failed to submit request");
+      }
 
       toast({
         title: "Request submitted!",
-        description: "Your video request has been saved and will be processed.",
+        description: "Thanks! Your request was saved. In the full version, this will trigger the autopost workflow.",
       });
 
       // Reset form
@@ -114,9 +106,10 @@ const IntakeForm = () => {
         notes: "",
       });
     } catch (error: any) {
+      console.error("Submit error:", error);
       toast({
         title: "Submission failed",
-        description: error.message || "Something went wrong. Please try again.",
+        description: error.message || "Failed to submit. Please try again.",
         variant: "destructive",
       });
     } finally {
