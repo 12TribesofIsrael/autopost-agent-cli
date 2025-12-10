@@ -144,6 +144,48 @@ export type Database = {
           },
         ]
       }
+      video_requests: {
+        Row: {
+          created_at: string
+          email: string
+          frequency: string
+          id: string
+          name: string
+          notes: string | null
+          platforms: string[]
+          submitted_at: string
+          updated_at: string
+          user_id: string
+          video_link: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          frequency: string
+          id?: string
+          name: string
+          notes?: string | null
+          platforms: string[]
+          submitted_at?: string
+          updated_at?: string
+          user_id: string
+          video_link: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          frequency?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          platforms?: string[]
+          submitted_at?: string
+          updated_at?: string
+          user_id?: string
+          video_link?: string
+        }
+        Relationships: []
+      }
       workflows: {
         Row: {
           created_at: string | null
