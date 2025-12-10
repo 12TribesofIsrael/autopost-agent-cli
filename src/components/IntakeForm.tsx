@@ -14,6 +14,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Check, Loader2 } from "lucide-react";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const platforms = [
   { id: "tiktok", label: "TikTok" },
@@ -35,6 +37,7 @@ type FormData = z.infer<typeof formSchema>;
 
 const IntakeForm = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -72,36 +75,53 @@ const IntakeForm = () => {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Please sign in",
+        description: "You need to be logged in to submit a video request.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Create payload
-    const payload = {
-      ...result.data,
-      submittedAt: new Date().toISOString(),
-    };
+    try {
+      const { error } = await supabase.from("video_requests").insert({
+        user_id: user.id,
+        name: result.data.name,
+        email: result.data.email,
+        video_link: result.data.videoLink,
+        platforms: result.data.platforms,
+        frequency: result.data.frequency,
+        notes: result.data.notes || null,
+      });
 
-    console.log("Autopost request payload:", payload);
+      if (error) throw error;
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 700));
+      toast({
+        title: "Request submitted!",
+        description: "Your video request has been saved and will be processed.",
+      });
 
-    setIsSubmitting(false);
-
-    toast({
-      title: "Request submitted!",
-      description:
-        "Thanks! Your request was captured. In the full version, this will trigger the AI autopost workflow.",
-    });
-
-    // Reset form
-    setFormData({
-      name: "",
-      email: "",
-      videoLink: "",
-      platforms: [],
-      frequency: "one_time",
-      notes: "",
-    });
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        videoLink: "",
+        platforms: [],
+        frequency: "one_time",
+        notes: "",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Submission failed",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
