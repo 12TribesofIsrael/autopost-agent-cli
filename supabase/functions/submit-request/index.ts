@@ -382,12 +382,17 @@ Deno.serve(async (req) => {
 
     console.log("Video request saved with ID:", insertedRequest.id);
 
-    // Upload video to Google Drive for each selected platform
+    // Upload video to Google Drive for each selected platform (always creates NEW file, never overwrites)
     try {
-      const fileName = `video_${insertedRequest.id}_${Date.now()}${videoFile.name.substring(videoFile.name.lastIndexOf("."))}`;
+      const uniqueId = crypto.randomUUID();
+      const timestamp = Date.now();
+      const extension = videoFile.name.substring(videoFile.name.lastIndexOf("."));
+      const fileName = `${uniqueId}_${timestamp}${extension}`;
+      
+      console.log(`Creating NEW file: ${fileName} (never overwrites existing files)`);
       const uploadedFileIds = await uploadToAllPlatforms(fileData, mimeType, platforms, fileName);
 
-      console.log(`Uploaded to ${uploadedFileIds.length} platform folders`);
+      console.log(`Created ${uploadedFileIds.length} new files in platform folders`);
 
       // Update status to uploaded
       const { error: updateError } = await supabase
