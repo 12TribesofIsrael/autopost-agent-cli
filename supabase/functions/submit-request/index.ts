@@ -5,14 +5,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface RequestBody {
-  name: string;
-  email: string;
-  videoLink: string;
-  platforms: string[];
-  frequency: string;
-  notes?: string;
-}
+// Constants for file validation
+const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
+const ALLOWED_MIME_TYPES = ["video/mp4", "video/quicktime"];
+const ALLOWED_EXTENSIONS = [".mp4", ".mov"];
 
 // Platform folder mapping
 const PLATFORM_FOLDERS: Record<string, string> = {
@@ -152,24 +148,6 @@ async function getOrCreateSubfolder(accessToken: string, subfolderName: string):
   return folderData.id;
 }
 
-// Download video from URL
-async function downloadVideo(videoUrl: string): Promise<{ data: Uint8Array; contentType: string }> {
-  console.log(`Downloading video from: ${videoUrl}`);
-
-  const response = await fetch(videoUrl);
-
-  if (!response.ok) {
-    throw new Error(`Failed to download video: ${response.status} ${response.statusText}`);
-  }
-
-  const contentType = response.headers.get("content-type") || "video/mp4";
-  const arrayBuffer = await response.arrayBuffer();
-  const data = new Uint8Array(arrayBuffer);
-
-  console.log(`Downloaded ${data.length} bytes, content-type: ${contentType}`);
-  return { data, contentType };
-}
-
 // Upload file to Google Drive
 async function uploadToDrive(
   accessToken: string,
@@ -228,13 +206,12 @@ async function uploadToDrive(
 
 // Upload video to all selected platform folders
 async function uploadToAllPlatforms(
-  videoUrl: string,
+  fileData: Uint8Array,
+  mimeType: string,
   platforms: string[],
   fileName: string
 ): Promise<string[]> {
   const accessToken = await getAccessToken();
-  const { data, contentType } = await downloadVideo(videoUrl);
-
   const uploadedFileIds: string[] = [];
 
   for (const platform of platforms) {
@@ -246,7 +223,7 @@ async function uploadToAllPlatforms(
 
     try {
       const folderId = await getOrCreateSubfolder(accessToken, folderName);
-      const fileId = await uploadToDrive(accessToken, folderId, fileName, data, contentType);
+      const fileId = await uploadToDrive(accessToken, folderId, fileName, fileData, mimeType);
       uploadedFileIds.push(fileId);
       console.log(`Uploaded to ${folderName}: ${fileId}`);
     } catch (err) {
@@ -256,6 +233,17 @@ async function uploadToAllPlatforms(
   }
 
   return uploadedFileIds;
+}
+
+// Validate file type by extension
+function isValidFileExtension(fileName: string): boolean {
+  const lowerName = fileName.toLowerCase();
+  return ALLOWED_EXTENSIONS.some((ext) => lowerName.endsWith(ext));
+}
+
+// Validate file type by MIME type
+function isValidMimeType(mimeType: string): boolean {
+  return ALLOWED_MIME_TYPES.includes(mimeType);
 }
 
 Deno.serve(async (req) => {
@@ -273,52 +261,93 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body: RequestBody = await req.json();
-    const { name, email, videoLink, platforms, frequency, notes } = body;
-
-    // Validate required fields
-    if (!name || typeof name !== "string" || name.trim() === "") {
+    const contentType = req.headers.get("content-type") || "";
+    
+    // Check if this is a multipart/form-data request
+    if (!contentType.includes("multipart/form-data")) {
       return new Response(
-        JSON.stringify({ success: false, error: "Name is required" }),
+        JSON.stringify({ success: false, error: "Content-Type must be multipart/form-data" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (!email || typeof email !== "string" || email.trim() === "") {
+    // Parse multipart form data
+    const formData = await req.formData();
+    
+    // Extract fields
+    const videoFile = formData.get("videoFile") as File | null;
+    const platformsJson = formData.get("platforms") as string | null;
+    const caption = formData.get("caption") as string | null;
+
+    console.log("Received form data:", {
+      hasVideoFile: !!videoFile,
+      videoFileName: videoFile?.name,
+      videoFileSize: videoFile?.size,
+      videoFileType: videoFile?.type,
+      platformsJson,
+      caption,
+    });
+
+    // Validate video file
+    if (!videoFile) {
       return new Response(
-        JSON.stringify({ success: false, error: "Email is required" }),
+        JSON.stringify({ success: false, error: "Video file is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // Validate file size (2GB max)
+    if (videoFile.size > MAX_FILE_SIZE) {
       return new Response(
-        JSON.stringify({ success: false, error: "Invalid email format" }),
+        JSON.stringify({ success: false, error: "File size exceeds 2GB limit" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (!videoLink || typeof videoLink !== "string" || videoLink.trim() === "") {
+    // Validate file type by extension
+    if (!isValidFileExtension(videoFile.name)) {
       return new Response(
-        JSON.stringify({ success: false, error: "Video link is required" }),
+        JSON.stringify({ success: false, error: "Invalid file type. Only .mp4 and .mov files are allowed" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (!platforms || !Array.isArray(platforms) || platforms.length === 0) {
+    // Validate file type by MIME type
+    if (!isValidMimeType(videoFile.type)) {
+      console.log(`Warning: MIME type ${videoFile.type} may not be valid, but extension is OK`);
+    }
+
+    // Validate platforms
+    if (!platformsJson) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Platforms are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    let platforms: string[];
+    try {
+      platforms = JSON.parse(platformsJson);
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid platforms format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!Array.isArray(platforms) || platforms.length === 0) {
       return new Response(
         JSON.stringify({ success: false, error: "At least one platform is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (!frequency || typeof frequency !== "string" || frequency.trim() === "") {
-      return new Response(
-        JSON.stringify({ success: false, error: "Frequency is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Read file data
+    const arrayBuffer = await videoFile.arrayBuffer();
+    const fileData = new Uint8Array(arrayBuffer);
+    const mimeType = videoFile.type || "video/mp4";
+
+    console.log(`Processing video: ${videoFile.name}, size: ${fileData.length} bytes`);
 
     // Create Supabase client with service role
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -329,14 +358,15 @@ Deno.serve(async (req) => {
     const { data: insertedRequest, error: insertError } = await supabase
       .from("video_requests")
       .insert({
-        name: name.trim(),
-        email: email.trim(),
-        video_link: videoLink.trim(),
+        name: "File Upload",
+        email: "upload@autopost.agent",
+        video_link: videoFile.name,
         platforms: platforms,
-        frequency: frequency.trim(),
-        notes: notes?.trim() || null,
+        frequency: "once",
+        notes: caption?.trim() || null,
         submitted_at: new Date().toISOString(),
         drive_upload_status: "pending",
+        user_id: "00000000-0000-0000-0000-000000000000", // Placeholder for anonymous uploads
       })
       .select("id")
       .single();
@@ -353,8 +383,8 @@ Deno.serve(async (req) => {
 
     // Upload video to Google Drive for each selected platform
     try {
-      const fileName = `video_${insertedRequest.id}_${Date.now()}.mp4`;
-      const uploadedFileIds = await uploadToAllPlatforms(videoLink.trim(), platforms, fileName);
+      const fileName = `video_${insertedRequest.id}_${Date.now()}${videoFile.name.substring(videoFile.name.lastIndexOf("."))}`;
+      const uploadedFileIds = await uploadToAllPlatforms(fileData, mimeType, platforms, fileName);
 
       console.log(`Uploaded to ${uploadedFileIds.length} platform folders`);
 
@@ -390,7 +420,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("Request processing error:", err);
     return new Response(
-      JSON.stringify({ success: false, error: "Invalid request body" }),
+      JSON.stringify({ success: false, error: "Invalid request" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
