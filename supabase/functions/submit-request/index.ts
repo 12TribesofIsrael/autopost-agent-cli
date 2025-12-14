@@ -17,6 +17,7 @@ const PLATFORM_FOLDERS: Record<string, string> = {
   youtube: "YouTube",
   facebook: "Facebook",
   x: "X",
+  googledrive: "GoogleDrive",
 };
 
 // Create JWT for Google service account authentication
