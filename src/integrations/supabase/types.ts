@@ -147,6 +147,7 @@ export type Database = {
       video_requests: {
         Row: {
           created_at: string
+          drive_file_ids: string[] | null
           drive_upload_status: string
           email: string
           file_name: string | null
@@ -162,6 +163,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          drive_file_ids?: string[] | null
           drive_upload_status?: string
           email: string
           file_name?: string | null
@@ -177,6 +179,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          drive_file_ids?: string[] | null
           drive_upload_status?: string
           email?: string
           file_name?: string | null
