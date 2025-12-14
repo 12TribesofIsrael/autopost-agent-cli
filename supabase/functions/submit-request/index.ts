@@ -276,7 +276,7 @@ Deno.serve(async (req) => {
     const formData = await req.formData();
     
     // Extract fields
-    const videoFile = formData.get("videoFile") as File | null;
+    const videoFile = formData.get("video") as File | null;
     const platformsJson = formData.get("platforms") as string | null;
     const caption = formData.get("caption") as string | null;
 
