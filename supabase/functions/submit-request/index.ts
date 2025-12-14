@@ -394,10 +394,13 @@ Deno.serve(async (req) => {
 
       console.log(`Created ${uploadedFileIds.length} new files in platform folders`);
 
-      // Update status to uploaded
+      // Update status to uploaded and store Drive file IDs
       const { error: updateError } = await supabase
         .from("video_requests")
-        .update({ drive_upload_status: "uploaded" })
+        .update({ 
+          drive_upload_status: "uploaded",
+          drive_file_ids: uploadedFileIds 
+        })
         .eq("id", insertedRequest.id);
 
       if (updateError) {
@@ -406,7 +409,11 @@ Deno.serve(async (req) => {
 
       console.log("Video request completed successfully");
       return new Response(
-        JSON.stringify({ success: true }),
+        JSON.stringify({ 
+          success: true, 
+          requestId: insertedRequest.id,
+          driveFileIds: uploadedFileIds 
+        }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } catch (uploadError) {
