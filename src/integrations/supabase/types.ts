@@ -147,6 +147,7 @@ export type Database = {
       video_requests: {
         Row: {
           created_at: string
+          drive_upload_status: string
           email: string
           frequency: string
           id: string
@@ -160,6 +161,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          drive_upload_status?: string
           email: string
           frequency: string
           id?: string
@@ -173,6 +175,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          drive_upload_status?: string
           email?: string
           frequency?: string
           id?: string
