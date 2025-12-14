@@ -368,7 +368,7 @@ Deno.serve(async (req) => {
         submitted_at: new Date().toISOString(),
         drive_upload_status: "processing",
         file_name: videoFile.name,
-        user_id: "00000000-0000-0000-0000-000000000000", // Placeholder for anonymous uploads
+        user_id: null, // Anonymous uploads
       })
       .select("id")
       .single();
