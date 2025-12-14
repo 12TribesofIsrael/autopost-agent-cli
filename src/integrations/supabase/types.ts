@@ -158,7 +158,7 @@ export type Database = {
           platforms: string[]
           submitted_at: string
           updated_at: string
-          user_id: string
+          user_id: string | null
           video_link: string
         }
         Insert: {
@@ -174,7 +174,7 @@ export type Database = {
           platforms: string[]
           submitted_at?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           video_link: string
         }
         Update: {
@@ -190,7 +190,7 @@ export type Database = {
           platforms?: string[]
           submitted_at?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           video_link?: string
         }
         Relationships: []
