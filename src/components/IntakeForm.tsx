@@ -1,56 +1,30 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Check, Loader2, Upload, X } from "lucide-react";
-import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
 const ACCEPTED_VIDEO_TYPES = [".mp4", ".mov"];
 
 const platforms = [
   { id: "tiktok", label: "TikTok" },
-  { id: "youtube_shorts", label: "YouTube Shorts" },
-  { id: "instagram_reels", label: "Instagram Reels" },
-  { id: "facebook_reels", label: "Facebook Reels" },
+  { id: "youtube", label: "YouTube" },
+  { id: "instagram", label: "Instagram" },
+  { id: "facebook", label: "Facebook" },
+  { id: "x", label: "X (Twitter)" },
 ];
-
-const formSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(100),
-  email: z.string().trim().email("Please enter a valid email").max(255),
-  videoLink: z.string().trim().url("Please enter a valid URL starting with http:// or https://").optional().or(z.literal("")),
-  platforms: z.array(z.string()).min(1, "Please select at least one platform"),
-  frequency: z.string(),
-  notes: z.string().max(1000).optional(),
-});
-
-type FormData = z.infer<typeof formSchema>;
 
 const IntakeForm = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
-    name: "",
-    email: "",
-    videoLink: "",
-    platforms: [],
-    frequency: "one_time",
-    notes: "",
-  });
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [caption, setCaption] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [platformError, setPlatformError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,74 +73,66 @@ const IntakeForm = () => {
   };
 
   const handlePlatformChange = (platformId: string, checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      platforms: checked
-        ? [...prev.platforms, platformId]
-        : prev.platforms.filter((p) => p !== platformId),
-    }));
-    setErrors((prev) => ({ ...prev, platforms: undefined }));
+    setSelectedPlatforms((prev) =>
+      checked ? [...prev, platformId] : prev.filter((p) => p !== platformId)
+    );
+    setPlatformError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrors({});
     setFileError(null);
+    setPlatformError(null);
 
-    // Require either a file or a video link
-    if (!videoFile && !formData.videoLink) {
-      setFileError("Please upload a video file or provide a video link");
+    // Validate video file
+    if (!videoFile) {
+      setFileError("Please upload a video file");
       return;
     }
 
-    const result = formSchema.safeParse(formData);
-
-    if (!result.success) {
-      const fieldErrors: Partial<Record<keyof FormData, string>> = {};
-      result.error.errors.forEach((err) => {
-        const field = err.path[0] as keyof FormData;
-        fieldErrors[field] = err.message;
-      });
-      setErrors(fieldErrors);
+    // Validate platforms
+    if (selectedPlatforms.length === 0) {
+      setPlatformError("Please select at least one platform");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // TODO: If videoFile exists, upload to temporary storage first
-      // For now, we'll store the file reference and pass metadata
-      const response = await supabase.functions.invoke("submit-request", {
-        body: {
-          name: result.data.name,
-          email: result.data.email,
-          videoLink: result.data.videoLink || null,
-          videoFileName: videoFile?.name || null,
-          videoFileSize: videoFile?.size || null,
-          platforms: result.data.platforms,
-          frequency: result.data.frequency,
-          notes: result.data.notes || null,
+      // Build multipart/form-data
+      const formData = new FormData();
+      formData.append("video", videoFile);
+      formData.append("platforms", JSON.stringify(selectedPlatforms));
+      if (caption.trim()) {
+        formData.append("caption", caption.trim());
+      }
+
+      // Send to edge function using fetch for multipart support
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/submit-request`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${supabaseAnonKey}`,
         },
+        body: formData,
       });
 
-      if (response.error || !response.data?.success) {
-        throw new Error(response.data?.error || response.error?.message || "Failed to submit request");
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to submit request");
       }
 
       toast({
-        title: "Request submitted!",
-        description: "Thanks! Your request was saved. In the full version, this will trigger the autopost workflow.",
+        title: "Video submitted!",
+        description: "Your video is being processed and will be posted to the selected platforms.",
       });
 
       // Reset form
-      setFormData({
-        name: "",
-        email: "",
-        videoLink: "",
-        platforms: [],
-        frequency: "one_time",
-        notes: "",
-      });
+      setSelectedPlatforms([]);
+      setCaption("");
       removeFile();
     } catch (error: any) {
       console.error("Submit error:", error);
@@ -190,22 +156,21 @@ const IntakeForm = () => {
               Get your content autoposted
             </h2>
             <p className="mb-6 text-muted-foreground">
-              Fill out this quick form and our AI agent can take over from here.
-              This MVP just logs your data and shows a success message so you can
-              test the flow.
+              Upload your video, select your platforms, and we'll handle the rest.
+              Your content will be automatically posted across all selected channels.
             </p>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-primary" />
-                Built to be API-ready
+                Upload once, post everywhere
               </li>
               <li className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-primary" />
-                Easy to plug into backend
+                Automatic platform optimization
               </li>
               <li className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-primary" />
-                Clean JSON payload on submit
+                Track your posts in the dashboard
               </li>
             </ul>
           </div>
@@ -217,39 +182,9 @@ const IntakeForm = () => {
             style={{ animationDelay: "0.1s" }}
           >
             <div className="space-y-5">
+              {/* Video Upload */}
               <div className="space-y-2">
-                <Label htmlFor="name">Your name</Label>
-                <Input
-                  id="name"
-                  placeholder="Jordan Creator"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                />
-                {errors.name && (
-                  <p className="text-sm text-destructive">{errors.name}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, email: e.target.value }))
-                  }
-                />
-                {errors.email && (
-                  <p className="text-sm text-destructive">{errors.email}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="videoFile">Upload video file</Label>
+                <Label htmlFor="videoFile">Upload video</Label>
                 <div className="flex flex-col gap-2">
                   {!videoFile ? (
                     <div 
@@ -296,31 +231,7 @@ const IntakeForm = () => {
                 )}
               </div>
 
-              <div className="relative flex items-center gap-4">
-                <div className="flex-1 border-t border-border/60" />
-                <span className="text-xs text-muted-foreground">or</span>
-                <div className="flex-1 border-t border-border/60" />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="videoLink">Video link</Label>
-                <Input
-                  id="videoLink"
-                  type="url"
-                  placeholder="https://..."
-                  value={formData.videoLink}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, videoLink: e.target.value }))
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  Google Drive, Dropbox, YouTube, Loom, etc.
-                </p>
-                {errors.videoLink && (
-                  <p className="text-sm text-destructive">{errors.videoLink}</p>
-                )}
-              </div>
-
+              {/* Platform Selection */}
               <div className="space-y-3">
                 <Label>Platforms to post on</Label>
                 <div className="flex flex-wrap gap-x-4 gap-y-2">
@@ -328,7 +239,7 @@ const IntakeForm = () => {
                     <div key={platform.id} className="flex items-center gap-2">
                       <Checkbox
                         id={platform.id}
-                        checked={formData.platforms.includes(platform.id)}
+                        checked={selectedPlatforms.includes(platform.id)}
                         onCheckedChange={(checked) =>
                           handlePlatformChange(platform.id, checked as boolean)
                         }
@@ -342,55 +253,35 @@ const IntakeForm = () => {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Backend can map these to actual posting APIs.
-                </p>
-                {errors.platforms && (
-                  <p className="text-sm text-destructive">{errors.platforms}</p>
+                {platformError && (
+                  <p className="text-sm text-destructive">{platformError}</p>
                 )}
               </div>
 
+              {/* Caption */}
               <div className="space-y-2">
-                <Label htmlFor="frequency">How often should we post?</Label>
-                <Select
-                  value={formData.frequency}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, frequency: value }))
-                  }
-                >
-                  <SelectTrigger id="frequency">
-                    <SelectValue placeholder="Select frequency" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="one_time">One-time blast</SelectItem>
-                    <SelectItem value="daily">Daily clips for a week</SelectItem>
-                    <SelectItem value="three_per_week">3x per week</SelectItem>
-                    <SelectItem value="custom">Custom plan</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Any notes or style preferences?</Label>
+                <Label htmlFor="caption">Caption (optional)</Label>
                 <Textarea
-                  id="notes"
-                  placeholder="Example: Focus on hooks, add subtitles, post evenings in EST..."
+                  id="caption"
+                  placeholder="Add a caption for your post..."
                   rows={3}
-                  value={formData.notes}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, notes: e.target.value }))
-                  }
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  maxLength={2200}
                 />
+                <p className="text-xs text-muted-foreground">
+                  {caption.length}/2200 characters
+                </p>
               </div>
 
               <Button type="submit" size="full" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Submitting...
+                    Uploading...
                   </>
                 ) : (
-                  "Submit video request"
+                  "Submit video"
                 )}
               </Button>
             </div>
