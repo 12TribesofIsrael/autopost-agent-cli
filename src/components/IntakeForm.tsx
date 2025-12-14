@@ -15,6 +15,7 @@ const platforms = [
   { id: "instagram", label: "Instagram" },
   { id: "facebook", label: "Facebook" },
   { id: "x", label: "X (Twitter)" },
+  { id: "googledrive", label: "Google Drive" },
 ];
 
 const IntakeForm = () => {
