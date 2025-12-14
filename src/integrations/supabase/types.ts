@@ -149,6 +149,7 @@ export type Database = {
           created_at: string
           drive_upload_status: string
           email: string
+          file_name: string | null
           frequency: string
           id: string
           name: string
@@ -163,6 +164,7 @@ export type Database = {
           created_at?: string
           drive_upload_status?: string
           email: string
+          file_name?: string | null
           frequency: string
           id?: string
           name: string
@@ -177,6 +179,7 @@ export type Database = {
           created_at?: string
           drive_upload_status?: string
           email?: string
+          file_name?: string | null
           frequency?: string
           id?: string
           name?: string

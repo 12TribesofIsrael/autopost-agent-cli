@@ -354,7 +354,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Insert the video request with pending status
+    // Insert the video request with processing status
     const { data: insertedRequest, error: insertError } = await supabase
       .from("video_requests")
       .insert({
@@ -365,7 +365,8 @@ Deno.serve(async (req) => {
         frequency: "once",
         notes: caption?.trim() || null,
         submitted_at: new Date().toISOString(),
-        drive_upload_status: "pending",
+        drive_upload_status: "processing",
+        file_name: videoFile.name,
         user_id: "00000000-0000-0000-0000-000000000000", // Placeholder for anonymous uploads
       })
       .select("id")
