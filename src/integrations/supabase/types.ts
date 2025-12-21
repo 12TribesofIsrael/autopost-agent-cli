@@ -157,6 +157,7 @@ export type Database = {
           notes: string | null
           platforms: string[]
           submitted_at: string
+          time_posted: string | null
           updated_at: string
           user_id: string | null
           video_link: string
@@ -167,15 +168,16 @@ export type Database = {
           drive_upload_status?: string
           email: string
           file_name?: string | null
-          frequency: string
+          frequency?: string
           id?: string
           name: string
           notes?: string | null
           platforms: string[]
           submitted_at?: string
+          time_posted?: string | null
           updated_at?: string
           user_id?: string | null
-          video_link: string
+          video_link?: string
         }
         Update: {
           created_at?: string
@@ -189,6 +191,7 @@ export type Database = {
           notes?: string | null
           platforms?: string[]
           submitted_at?: string
+          time_posted?: string | null
           updated_at?: string
           user_id?: string | null
           video_link?: string
