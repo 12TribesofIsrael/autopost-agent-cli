@@ -1,10 +1,12 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Loader2, Upload, X } from "lucide-react";
+import { Check, Loader2, Upload, X, Link, CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
 const ACCEPTED_VIDEO_TYPES = [".mp4", ".mov"];
@@ -15,17 +17,22 @@ const platforms = [
   { id: "instagram", label: "Instagram" },
   { id: "facebook", label: "Facebook" },
   { id: "x", label: "X (Twitter)" },
-  { id: "googledrive", label: "Google Drive" },
 ];
 
 const IntakeForm = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [caption, setCaption] = useState("");
+  const [notes, setNotes] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoLink, setVideoLink] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [fileError, setFileError] = useState<string | null>(null);
   const [platformError, setPlatformError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,7 +44,6 @@ const IntakeForm = () => {
       return;
     }
 
-    // Check file extension
     const extension = `.${file.name.split('.').pop()?.toLowerCase()}`;
     if (!ACCEPTED_VIDEO_TYPES.includes(extension)) {
       setFileError("Please upload a .mp4 or .mov file");
@@ -45,7 +51,6 @@ const IntakeForm = () => {
       return;
     }
 
-    // Check file size
     if (file.size > MAX_FILE_SIZE) {
       setFileError("File size must be less than 2GB");
       setVideoFile(null);
@@ -53,6 +58,7 @@ const IntakeForm = () => {
     }
 
     setVideoFile(file);
+    setVideoLink(""); // Clear link if file is uploaded
   };
 
   const removeFile = () => {
@@ -80,14 +86,37 @@ const IntakeForm = () => {
     setPlatformError(null);
   };
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFileError(null);
     setPlatformError(null);
+    setEmailError(null);
+    setNameError(null);
 
-    // Validate video file
-    if (!videoFile) {
-      setFileError("Please upload a video file");
+    // Validate name
+    if (!name.trim()) {
+      setNameError("Please enter your name");
+      return;
+    }
+
+    // Validate email
+    if (!email.trim()) {
+      setEmailError("Please enter your email");
+      return;
+    }
+    if (!validateEmail(email.trim())) {
+      setEmailError("Please enter a valid email address");
+      return;
+    }
+
+    // Validate video (file OR link required)
+    if (!videoFile && !videoLink.trim()) {
+      setFileError("Please upload a video or paste a link");
       return;
     }
 
@@ -100,41 +129,21 @@ const IntakeForm = () => {
     setIsSubmitting(true);
 
     try {
-      // Build multipart/form-data
-      const formData = new FormData();
-      formData.append("video", videoFile);
-      formData.append("platforms", JSON.stringify(selectedPlatforms));
-      if (caption.trim()) {
-        formData.append("caption", caption.trim());
-      }
-
-      // Send to edge function using fetch for multipart support
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/submit-request`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${supabaseAnonKey}`,
-        },
-        body: formData,
+      // Insert directly into the database
+      const { error } = await supabase.from("video_requests").insert({
+        name: name.trim(),
+        email: email.trim(),
+        video_link: videoFile ? `[File Upload: ${videoFile.name}]` : videoLink.trim(),
+        file_name: videoFile?.name || null,
+        platforms: selectedPlatforms,
+        notes: notes.trim() || null,
+        frequency: "once",
+        drive_upload_status: "pending",
       });
 
-      const data = await response.json();
+      if (error) throw error;
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || "Failed to submit request");
-      }
-
-      toast({
-        title: "Video submitted!",
-        description: "Your video is being processed and will be posted to the selected platforms.",
-      });
-
-      // Reset form
-      setSelectedPlatforms([]);
-      setCaption("");
-      removeFile();
+      setIsSubmitted(true);
     } catch (error: any) {
       console.error("Submit error:", error);
       toast({
@@ -147,6 +156,43 @@ const IntakeForm = () => {
     }
   };
 
+  const resetForm = () => {
+    setIsSubmitted(false);
+    setSelectedPlatforms([]);
+    setNotes("");
+    setVideoFile(null);
+    setVideoLink("");
+    setName("");
+    setEmail("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Success state
+  if (isSubmitted) {
+    return (
+      <section id="get-started" className="py-14 md:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-lg animate-fade-in-up">
+            <div className="gradient-card rounded-2xl border border-border/80 p-8 shadow-soft text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <CheckCircle2 className="h-8 w-8 text-primary" />
+              </div>
+              <h2 className="mb-2 text-2xl font-bold">Thanks! We're on it 🎬</h2>
+              <p className="mb-6 text-muted-foreground">
+                We received your video request and will have it posted to your selected platforms within 2 hours. You'll receive a confirmation email once it's live.
+              </p>
+              <Button onClick={resetForm} variant="outline">
+                Submit another video
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="get-started" className="py-14 md:py-20">
       <div className="container">
@@ -157,8 +203,8 @@ const IntakeForm = () => {
               Get your content autoposted
             </h2>
             <p className="mb-6 text-muted-foreground">
-              Upload your video, select your platforms, and we'll handle the rest.
-              Your content will be automatically posted across all selected channels.
+              Upload your video or paste a link, select your platforms, and we'll handle the rest.
+              Your content will be posted within 2 hours.
             </p>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
@@ -167,11 +213,11 @@ const IntakeForm = () => {
               </li>
               <li className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-primary" />
-                Automatic platform optimization
+                We handle platform optimization
               </li>
               <li className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-primary" />
-                Track your posts in the dashboard
+                Posted within 2 hours
               </li>
             </ul>
           </div>
@@ -183,11 +229,50 @@ const IntakeForm = () => {
             style={{ animationDelay: "0.1s" }}
           >
             <div className="space-y-5">
-              {/* Video Upload */}
+              {/* Name */}
               <div className="space-y-2">
-                <Label htmlFor="videoFile">Upload video</Label>
-                <div className="flex flex-col gap-2">
-                  {!videoFile ? (
+                <Label htmlFor="name">Your name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="John Smith"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    setNameError(null);
+                  }}
+                  maxLength={100}
+                />
+                {nameError && (
+                  <p className="text-sm text-destructive">{nameError}</p>
+                )}
+              </div>
+
+              {/* Email */}
+              <div className="space-y-2">
+                <Label htmlFor="email">Email address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailError(null);
+                  }}
+                  maxLength={255}
+                />
+                {emailError && (
+                  <p className="text-sm text-destructive">{emailError}</p>
+                )}
+              </div>
+
+              {/* Video Upload OR Link */}
+              <div className="space-y-2">
+                <Label>Video (upload or paste link)</Label>
+                
+                {!videoFile ? (
+                  <div className="space-y-3">
                     <div 
                       className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border/60 bg-muted/30 p-6 transition-colors hover:border-primary/50 hover:bg-muted/50 cursor-pointer"
                       onClick={() => fileInputRef.current?.click()}
@@ -196,37 +281,55 @@ const IntakeForm = () => {
                       <p className="text-sm font-medium text-foreground">Click to upload video</p>
                       <p className="text-xs text-muted-foreground mt-1">MP4 or MOV, max 2GB</p>
                     </div>
-                  ) : (
-                    <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10">
-                          <Upload className="h-5 w-5 text-primary" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-foreground">{videoFile.name}</p>
-                          <p className="text-xs text-muted-foreground">{formatFileSize(videoFile.size)}</p>
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0"
-                        onClick={removeFile}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="h-px flex-1 bg-border"></div>
+                      <span className="text-xs text-muted-foreground">or paste a link</span>
+                      <div className="h-px flex-1 bg-border"></div>
                     </div>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    id="videoFile"
-                    accept=".mp4,.mov"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                </div>
+                    
+                    <div className="relative">
+                      <Link className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        type="url"
+                        placeholder="https://drive.google.com/... or https://dropbox.com/..."
+                        value={videoLink}
+                        onChange={(e) => setVideoLink(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10">
+                        <Upload className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">{videoFile.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatFileSize(videoFile.size)}</p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0"
+                      onClick={removeFile}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  id="videoFile"
+                  accept=".mp4,.mov"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
                 {fileError && (
                   <p className="text-sm text-destructive">{fileError}</p>
                 )}
@@ -259,27 +362,24 @@ const IntakeForm = () => {
                 )}
               </div>
 
-              {/* Caption */}
+              {/* Notes */}
               <div className="space-y-2">
-                <Label htmlFor="caption">Caption (optional)</Label>
+                <Label htmlFor="notes">Notes (optional)</Label>
                 <Textarea
-                  id="caption"
-                  placeholder="Add a caption for your post..."
+                  id="notes"
+                  placeholder="Any special instructions or captions..."
                   rows={3}
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
                   maxLength={2200}
                 />
-                <p className="text-xs text-muted-foreground">
-                  {caption.length}/2200 characters
-                </p>
               </div>
 
               <Button type="submit" size="full" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Uploading...
+                    Submitting...
                   </>
                 ) : (
                   "Submit video"
