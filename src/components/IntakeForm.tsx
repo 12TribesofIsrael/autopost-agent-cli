@@ -183,11 +183,7 @@ const IntakeForm = () => {
       return;
     }
 
-    // Validate CAPTCHA
-    if (!turnstileToken) {
-      setCaptchaError("Please complete the security check");
-      return;
-    }
+    // CAPTCHA validation disabled
 
     setIsSubmitting(true);
 
@@ -512,13 +508,7 @@ const IntakeForm = () => {
                 />
               </div>
 
-              {/* Turnstile CAPTCHA */}
-              <div className="space-y-2">
-                <div ref={turnstileRef} id="turnstile-container"></div>
-                {captchaError && (
-                  <p className="text-sm text-destructive">{captchaError}</p>
-                )}
-              </div>
+              {/* CAPTCHA disabled */}
 
               <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? (
