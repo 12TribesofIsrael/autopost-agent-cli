@@ -172,7 +172,7 @@ const IntakeForm = () => {
   // Success state
   if (isSubmitted) {
     return (
-      <section id="get-started" className="py-14 md:py-20">
+      <section id="beta-form" className="py-14 md:py-20">
         <div className="container">
           <div className="mx-auto max-w-lg animate-fade-in-up">
             <div className="gradient-card rounded-2xl border border-border/80 p-8 shadow-soft text-center">
@@ -194,7 +194,7 @@ const IntakeForm = () => {
   }
 
   return (
-    <section id="get-started" className="py-14 md:py-20">
+    <section id="beta-form" className="py-14 md:py-20">
       <div className="container">
         <div className="grid items-start gap-10 lg:grid-cols-2">
           {/* Copy */}
