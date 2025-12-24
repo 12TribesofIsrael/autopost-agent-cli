@@ -352,7 +352,11 @@ export function ConnectAccountsStep() {
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Destination Platforms</span>
           <div className="h-px flex-1 bg-border" />
         </div>
-        <p className="text-xs text-muted-foreground text-center">Where we'll publish your repurposed content</p>
+        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            <strong>Note:</strong> You must have these accounts already created, or we can create them for you as part of our Done-For-You service.
+          </p>
+        </div>
         <div className="grid gap-3">
           {destinationPlatforms.map(renderPlatformCard)}
         </div>
