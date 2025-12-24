@@ -1,84 +1,126 @@
 import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
 
 const plans = [
   {
     name: "Self-Service",
-    price: "$29",
+    price: "$49",
     period: "/month",
+    description: "You post, we distribute everywhere else.",
     features: [
       "Post to your source platform",
-      "We auto-repurpose to all others",
-      "Up to 10 videos/month",
+      "Auto-repurpose to 5+ platforms",
+      "Up to 20 videos/month",
       "AI-optimized captions & hashtags",
+      "Basic analytics dashboard",
     ],
     featured: false,
   },
   {
     name: "Done-For-You",
-    price: "$99",
+    price: "$199",
     period: "/month",
+    description: "Send us your content, we handle everything.",
     features: [
-      "Send us your content",
-      "We handle all uploads & repurposing",
+      "Send us your raw content",
+      "We upload & repurpose for you",
       "Unlimited videos",
-      "Priority scheduling",
+      "Priority scheduling & posting",
+      "Custom captions per platform",
+      "Dedicated support",
     ],
     featured: true,
-    tagline: "Most popular for busy creators.",
+    tagline: "Most popular",
   },
   {
     name: "Full Creation",
-    price: "Custom",
-    period: "",
+    price: "$499",
+    period: "/month",
+    description: "We create AND distribute your content.",
     features: [
-      "We create original content for you",
-      "Full repurposing across platforms",
+      "Original content creation",
+      "Full repurposing across all platforms",
       "Dedicated content strategist",
+      "Brand voice & style matching",
+      "Monthly strategy calls",
       "White-glove service",
     ],
     featured: false,
-    tagline: "For brands that want it all.",
+    tagline: "Best value for growth",
   },
+];
+
+const addons = [
+  { name: "Account creation", price: "$35/platform", description: "One-time setup fee" },
+  { name: "Extra platforms", price: "$15/platform/mo", description: "Beyond included 5" },
+  { name: "Priority support", price: "$29/mo", description: "Same-day responses" },
 ];
 
 const Pricing = () => {
   return (
     <section id="pricing" className="py-14 md:py-20">
       <div className="container">
-        <h2 className="mb-10 text-2xl font-bold md:text-3xl">
-          Simple creator-friendly pricing
-        </h2>
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="text-center mb-10">
+          <h2 className="mb-4 text-3xl font-extrabold tracking-tight md:text-4xl">
+            Simple, Transparent Pricing
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Choose the level of service that fits your brand. Cancel anytime.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-3 mb-12">
           {plans.map((plan, index) => (
             <div
               key={plan.name}
               className={cn(
-                "animate-fade-in-up rounded-xl border p-6",
+                "animate-fade-in-up rounded-2xl border p-6 relative flex flex-col",
                 plan.featured
-                  ? "border-primary bg-secondary/80 shadow-soft"
-                  : "border-border/80 bg-secondary/50"
+                  ? "border-primary bg-primary/5 shadow-lg scale-[1.02]"
+                  : "border-border/80 bg-card/50"
               )}
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <h3 className="mb-2 font-semibold">{plan.name}</h3>
-              <p className="mb-4 text-3xl font-bold">
-                {plan.price}
+              {plan.tagline && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 rounded-full">
+                  {plan.tagline}
+                </span>
+              )}
+              <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
+              <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
+              <p className="mb-6">
+                <span className="text-4xl font-extrabold">{plan.price}</span>
                 {plan.period && (
-                  <span className="ml-1 text-sm font-normal text-muted-foreground">
-                    {plan.period}
-                  </span>
+                  <span className="text-muted-foreground">{plan.period}</span>
                 )}
               </p>
-              <ul className="mb-4 space-y-2 text-sm text-muted-foreground">
+              <ul className="space-y-3 text-sm flex-1">
                 {plan.features.map((feature) => (
-                  <li key={feature}>{feature}</li>
+                  <li key={feature} className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">{feature}</span>
+                  </li>
                 ))}
               </ul>
-              {plan.tagline && (
-                <p className="text-sm font-medium text-primary">{plan.tagline}</p>
-              )}
             </div>
           ))}
+        </div>
+
+        {/* Add-ons */}
+        <div className="max-w-2xl mx-auto">
+          <h3 className="text-lg font-semibold text-center mb-4">Optional Add-ons</h3>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {addons.map((addon) => (
+              <div
+                key={addon.name}
+                className="text-center p-4 rounded-lg border border-border/60 bg-card/30"
+              >
+                <p className="font-medium text-sm">{addon.name}</p>
+                <p className="text-primary font-bold">{addon.price}</p>
+                <p className="text-xs text-muted-foreground">{addon.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
