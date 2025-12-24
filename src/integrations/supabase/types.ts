@@ -209,6 +209,8 @@ export type Database = {
       }
       video_requests: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           drive_file_ids: string[] | null
           drive_upload_status: string
@@ -216,9 +218,12 @@ export type Database = {
           file_name: string | null
           frequency: string
           id: string
+          intake_completed: boolean | null
+          intake_token: string | null
           name: string
           notes: string | null
           platforms: string[]
+          status: string
           submitted_at: string
           time_posted: string | null
           updated_at: string
@@ -226,6 +231,8 @@ export type Database = {
           video_link: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           drive_file_ids?: string[] | null
           drive_upload_status?: string
@@ -233,9 +240,12 @@ export type Database = {
           file_name?: string | null
           frequency?: string
           id?: string
+          intake_completed?: boolean | null
+          intake_token?: string | null
           name: string
           notes?: string | null
           platforms: string[]
+          status?: string
           submitted_at?: string
           time_posted?: string | null
           updated_at?: string
@@ -243,6 +253,8 @@ export type Database = {
           video_link?: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           drive_file_ids?: string[] | null
           drive_upload_status?: string
@@ -250,9 +262,12 @@ export type Database = {
           file_name?: string | null
           frequency?: string
           id?: string
+          intake_completed?: boolean | null
+          intake_token?: string | null
           name?: string
           notes?: string | null
           platforms?: string[]
+          status?: string
           submitted_at?: string
           time_posted?: string | null
           updated_at?: string

@@ -25,12 +25,9 @@ const Hero = () => {
           <p className="mb-8 text-sm text-muted-foreground/80">
             Now accepting early access clients — limited spots available.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex justify-center">
             <Button size="lg" onClick={scrollToBetaForm}>
               Join the Free Beta
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate("/intake")}>
-              Start Intake
             </Button>
           </div>
           
