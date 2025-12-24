@@ -1,21 +1,21 @@
 const steps = [
   {
     number: 1,
-    title: "Upload or paste your video link",
+    title: "Post to your favorite platform",
     description:
-      "Drop a link from Google Drive, Dropbox, YouTube, or any video host.",
+      "Upload your video to TikTok, YouTube, or Instagram—wherever you already post.",
   },
   {
     number: 2,
-    title: "Choose platforms & preferences",
+    title: "Connect your accounts",
     description:
-      "Pick TikTok, YouTube Shorts, Instagram Reels and more. Add notes for clips, style, or posting schedule.",
+      "Link your social platforms once. Tell us your posting preferences and schedule.",
   },
   {
     number: 3,
-    title: "AI agent handles the rest",
+    title: "We distribute everywhere",
     description:
-      "The backend will resize, caption, and post your content on autopilot.",
+      "Our AI automatically repurposes and posts your content to all connected platforms.",
   },
 ];
 

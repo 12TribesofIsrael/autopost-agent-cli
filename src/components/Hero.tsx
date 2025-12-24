@@ -17,10 +17,10 @@ const Hero = () => {
             <span className="text-primary">Start Going Viral.</span>
           </h1>
           <p className="mb-2 text-xl font-semibold text-foreground/90">
-            One upload. Three platforms. Under 2 hours.
+            Post once. We handle the rest.
           </p>
           <p className="mb-4 text-lg text-muted-foreground">
-            I help boxers, gyms, fitness businesses, and daycare owners who post short vertical videos get their content onto TikTok, Instagram Reels, and YouTube Shorts—without uploading to each app one by one.
+            Upload to your favorite platform—TikTok, YouTube, or Instagram—and we'll automatically repurpose and distribute your content to all the others. No extra uploads. No extra work.
           </p>
           <p className="mb-8 text-sm text-muted-foreground/80">
             Now accepting early access clients — limited spots available.
