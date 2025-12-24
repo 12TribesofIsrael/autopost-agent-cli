@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Turnstile } from "@marsidev/react-turnstile";
+
+// Turnstile site key - this is a public key, safe to include in code
+// Get yours at: https://dash.cloudflare.com/?to=/:account/turnstile
+const TURNSTILE_SITE_KEY = "0x4AAAAAABdFX2mB1rEK0Xnz"; // Replace with your actual site key
 
 const platforms = [
   { id: "tiktok", label: "TikTok" },
@@ -35,6 +40,7 @@ const IntakeForm = () => {
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [videosPerWeek, setVideosPerWeek] = useState("");
   const [painPoint, setPainPoint] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -43,6 +49,9 @@ const IntakeForm = () => {
   const [tierError, setTierError] = useState<string | null>(null);
   const [platformError, setPlatformError] = useState<string | null>(null);
   const [videosError, setVideosError] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
+
+  const turnstileRef = useRef<any>(null);
 
   const handlePlatformChange = (platformId: string, checked: boolean) => {
     setSelectedPlatforms((prev) =>
@@ -65,6 +74,7 @@ const IntakeForm = () => {
     setTierError(null);
     setPlatformError(null);
     setVideosError(null);
+    setCaptchaError(null);
 
     // Validate name
     if (!name.trim()) {
@@ -112,6 +122,12 @@ const IntakeForm = () => {
       return;
     }
 
+    // Validate CAPTCHA
+    if (!turnstileToken) {
+      setCaptchaError("Please complete the security check");
+      return;
+    }
+
     setIsSubmitting(true);
 
     const formData = {
@@ -123,9 +139,9 @@ const IntakeForm = () => {
       platforms: selectedPlatforms,
       videosPerWeek,
       painPoint: painPoint.trim() || "",
+      turnstileToken,
     };
 
-    // Log to console for debugging
     console.log("Beta form submission:", formData);
 
     try {
@@ -133,7 +149,7 @@ const IntakeForm = () => {
       const { error } = await supabase.from("video_requests").insert({
         name: formData.name,
         email: formData.email,
-        video_link: "", // No video link for beta signup
+        video_link: "",
         platforms: formData.platforms,
         notes: `Service Tier: ${formData.serviceTier}\nBusiness Type: ${formData.businessType}\nSource Platform: ${formData.sourcePlatform || "N/A"}\nVideos per week: ${formData.videosPerWeek}\nPain point: ${formData.painPoint || "Not provided"}`,
         frequency: formData.videosPerWeek,
@@ -144,7 +160,7 @@ const IntakeForm = () => {
 
       console.log("Beta request saved to database successfully");
 
-      // Send email notification (non-blocking)
+      // Send email notification with CAPTCHA token for verification
       supabase.functions.invoke("send-beta-notification", {
         body: formData,
       }).then((res) => {
@@ -161,6 +177,9 @@ const IntakeForm = () => {
         description: error.message || "Failed to submit. Please try again.",
         variant: "destructive",
       });
+      // Reset Turnstile on error
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -176,6 +195,8 @@ const IntakeForm = () => {
     setSelectedPlatforms([]);
     setVideosPerWeek("");
     setPainPoint("");
+    setTurnstileToken(null);
+    turnstileRef.current?.reset();
   };
 
   // Success state
@@ -188,7 +209,7 @@ const IntakeForm = () => {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                 <CheckCircle2 className="h-8 w-8 text-primary" />
               </div>
-              <h2 className="mb-2 text-2xl font-bold">Thanks for joining the beta! 🎉</h2>
+              <h2 className="mb-2 text-2xl font-bold">Thanks for joining the beta!</h2>
               <p className="mb-6 text-muted-foreground">
                 We'll review your info and email you with next steps. Beta spots are limited while we refine the experience.
               </p>
@@ -428,6 +449,31 @@ const IntakeForm = () => {
                   onChange={(e) => setPainPoint(e.target.value)}
                   maxLength={1000}
                 />
+              </div>
+
+              {/* Turnstile CAPTCHA */}
+              <div className="space-y-2">
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => {
+                    setTurnstileToken(token);
+                    setCaptchaError(null);
+                  }}
+                  onError={() => {
+                    setTurnstileToken(null);
+                    setCaptchaError("Security check failed. Please try again.");
+                  }}
+                  onExpire={() => {
+                    setTurnstileToken(null);
+                  }}
+                  options={{
+                    theme: "auto",
+                  }}
+                />
+                {captchaError && (
+                  <p className="text-sm text-destructive">{captchaError}</p>
+                )}
               </div>
 
               <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
