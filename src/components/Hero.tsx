@@ -38,7 +38,7 @@ const Hero = () => {
               className="h-16 w-auto"
             />
             <p className="text-xs text-muted-foreground">
-              Powered by <span className="font-semibold">GrowYourBrand</span>
+              Powered by <span className="font-semibold">BMBAIAutomations</span> — a Father and Son Collaboration
             </p>
           </div>
         </div>
