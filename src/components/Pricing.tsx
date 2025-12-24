@@ -2,26 +2,42 @@ import { cn } from "@/lib/utils";
 
 const plans = [
   {
-    name: "Starter",
-    price: "$19",
+    name: "Self-Service",
+    price: "$29",
     period: "/month",
-    features: ["Up to 4 videos per month", "Post to 3 platforms", "AI titles & hashtags"],
+    features: [
+      "Post to your source platform",
+      "We auto-repurpose to all others",
+      "Up to 10 videos/month",
+      "AI-optimized captions & hashtags",
+    ],
     featured: false,
   },
   {
-    name: "Pro Creator",
-    price: "$49",
+    name: "Done-For-You",
+    price: "$99",
     period: "/month",
-    features: ["Unlimited videos", "All major platforms", "Scheduling & analytics"],
+    features: [
+      "Send us your content",
+      "We handle all uploads & repurposing",
+      "Unlimited videos",
+      "Priority scheduling",
+    ],
     featured: true,
-    tagline: "Perfect tier to launch first.",
+    tagline: "Most popular for busy creators.",
   },
   {
-    name: "Agency",
+    name: "Full Creation",
     price: "Custom",
     period: "",
-    features: ["Multiple client accounts", "White-label options", "Priority support"],
+    features: [
+      "We create original content for you",
+      "Full repurposing across platforms",
+      "Dedicated content strategist",
+      "White-glove service",
+    ],
     featured: false,
+    tagline: "For brands that want it all.",
   },
 ];
 

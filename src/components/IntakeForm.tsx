@@ -31,6 +31,7 @@ const IntakeForm = () => {
   const [email, setEmail] = useState("");
   const [businessType, setBusinessType] = useState("");
   const [sourcePlatform, setSourcePlatform] = useState("");
+  const [serviceTier, setServiceTier] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [videosPerWeek, setVideosPerWeek] = useState("");
   const [painPoint, setPainPoint] = useState("");
@@ -39,6 +40,7 @@ const IntakeForm = () => {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [businessTypeError, setBusinessTypeError] = useState<string | null>(null);
   const [sourceError, setSourceError] = useState<string | null>(null);
+  const [tierError, setTierError] = useState<string | null>(null);
   const [platformError, setPlatformError] = useState<string | null>(null);
   const [videosError, setVideosError] = useState<string | null>(null);
 
@@ -60,6 +62,7 @@ const IntakeForm = () => {
     setEmailError(null);
     setBusinessTypeError(null);
     setSourceError(null);
+    setTierError(null);
     setPlatformError(null);
     setVideosError(null);
 
@@ -85,9 +88,15 @@ const IntakeForm = () => {
       return;
     }
 
-    // Validate source platform
-    if (!sourcePlatform) {
+    // Validate source platform (only required for self-service)
+    if (serviceTier === "self-service" && !sourcePlatform) {
       setSourceError("Please select your primary posting platform");
+      return;
+    }
+
+    // Validate service tier
+    if (!serviceTier) {
+      setTierError("Please select a service tier");
       return;
     }
 
@@ -109,7 +118,8 @@ const IntakeForm = () => {
       name: name.trim(),
       email: email.trim(),
       businessType: businessType.trim(),
-      sourcePlatform,
+      serviceTier,
+      sourcePlatform: serviceTier === "self-service" ? sourcePlatform : "",
       platforms: selectedPlatforms,
       videosPerWeek,
       painPoint: painPoint.trim() || "",
@@ -125,7 +135,7 @@ const IntakeForm = () => {
         email: formData.email,
         video_link: "", // No video link for beta signup
         platforms: formData.platforms,
-        notes: `Business Type: ${formData.businessType}\nSource Platform: ${formData.sourcePlatform}\nVideos per week: ${formData.videosPerWeek}\nPain point: ${formData.painPoint || "Not provided"}`,
+        notes: `Service Tier: ${formData.serviceTier}\nBusiness Type: ${formData.businessType}\nSource Platform: ${formData.sourcePlatform || "N/A"}\nVideos per week: ${formData.videosPerWeek}\nPain point: ${formData.painPoint || "Not provided"}`,
         frequency: formData.videosPerWeek,
         drive_upload_status: "beta_request",
       });
@@ -161,6 +171,7 @@ const IntakeForm = () => {
     setName("");
     setEmail("");
     setBusinessType("");
+    setServiceTier("");
     setSourcePlatform("");
     setSelectedPlatforms([]);
     setVideosPerWeek("");
@@ -269,29 +280,92 @@ const IntakeForm = () => {
                 )}
               </div>
 
-              {/* Source Platform Selection */}
-              <div className="space-y-2">
-                <Label>Where do you currently post your videos?</Label>
-                <p className="text-sm text-muted-foreground">This is your primary source—we'll pull content from here.</p>
-                <Select value={sourcePlatform} onValueChange={(value) => {
-                  setSourcePlatform(value);
-                  setSourceError(null);
-                }}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select your main platform" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {platforms.filter(p => p.id !== "other").map((platform) => (
-                      <SelectItem key={platform.id} value={platform.id}>
-                        {platform.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {sourceError && (
-                  <p className="text-sm text-destructive">{sourceError}</p>
+              {/* Service Tier Selection */}
+              <div className="space-y-3">
+                <Label>Which service level are you interested in?</Label>
+                <div className="grid gap-3">
+                  <label className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${serviceTier === "self-service" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                    <input
+                      type="radio"
+                      name="serviceTier"
+                      value="self-service"
+                      checked={serviceTier === "self-service"}
+                      onChange={(e) => {
+                        setServiceTier(e.target.value);
+                        setTierError(null);
+                      }}
+                      className="mt-1"
+                    />
+                    <div>
+                      <div className="font-medium">Self-Service</div>
+                      <div className="text-sm text-muted-foreground">I'll post to my source platform, you repurpose everywhere else</div>
+                    </div>
+                  </label>
+                  <label className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${serviceTier === "done-for-you" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                    <input
+                      type="radio"
+                      name="serviceTier"
+                      value="done-for-you"
+                      checked={serviceTier === "done-for-you"}
+                      onChange={(e) => {
+                        setServiceTier(e.target.value);
+                        setTierError(null);
+                      }}
+                      className="mt-1"
+                    />
+                    <div>
+                      <div className="font-medium">Done-For-You Upload</div>
+                      <div className="text-sm text-muted-foreground">I'll send you my content, you handle all uploads & repurposing</div>
+                    </div>
+                  </label>
+                  <label className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${serviceTier === "full-creation" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                    <input
+                      type="radio"
+                      name="serviceTier"
+                      value="full-creation"
+                      checked={serviceTier === "full-creation"}
+                      onChange={(e) => {
+                        setServiceTier(e.target.value);
+                        setTierError(null);
+                      }}
+                      className="mt-1"
+                    />
+                    <div>
+                      <div className="font-medium">Full Content Creation</div>
+                      <div className="text-sm text-muted-foreground">Create original content for me AND repurpose across platforms</div>
+                    </div>
+                  </label>
+                </div>
+                {tierError && (
+                  <p className="text-sm text-destructive">{tierError}</p>
                 )}
               </div>
+
+              {/* Source Platform Selection - only show for self-service */}
+              {serviceTier === "self-service" && (
+                <div className="space-y-2 animate-fade-in">
+                  <Label>Where do you currently post your videos?</Label>
+                  <p className="text-sm text-muted-foreground">This is your primary source—we'll pull content from here.</p>
+                  <Select value={sourcePlatform} onValueChange={(value) => {
+                    setSourcePlatform(value);
+                    setSourceError(null);
+                  }}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select your main platform" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {platforms.filter(p => p.id !== "other").map((platform) => (
+                        <SelectItem key={platform.id} value={platform.id}>
+                          {platform.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {sourceError && (
+                    <p className="text-sm text-destructive">{sourceError}</p>
+                  )}
+                </div>
+              )}
 
               {/* Destination Platform Selection */}
               <div className="space-y-3">
