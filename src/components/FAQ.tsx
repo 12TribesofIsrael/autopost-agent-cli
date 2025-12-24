@@ -34,12 +34,32 @@ const faqs = [
   {
     question: "Is there a contract or commitment?",
     answer:
-      "During the beta, there's no long-term commitment. We're focused on proving value first. After beta, we'll offer flexible monthly plans.",
+      "During the beta, there's no long-term commitment. We're focused on proving value first. After beta, we'll offer flexible monthly plans with no annual lock-in required.",
   },
   {
     question: "Can you create accounts for platforms I don't have yet?",
     answer:
       "Yes! Account creation is available as a paid add-on service. Just indicate which platforms you need during intake and we'll handle the setup.",
+  },
+  {
+    question: "How much will this cost after the beta?",
+    answer:
+      "We're still finalizing pricing, but expect affordable monthly plans based on the number of platforms and posting frequency. Beta users will get early-bird discounts and priority access to new features.",
+  },
+  {
+    question: "What happens when the beta ends?",
+    answer:
+      "Beta users will be notified before any changes. You'll have the option to continue with a paid plan at a discounted rate, or you can pause your workflows. We'll never cut off access without notice.",
+  },
+  {
+    question: "Do you offer refunds?",
+    answer:
+      "During beta, the service is free so no refunds apply. Once paid plans launch, we'll offer a satisfaction guarantee—if you're not happy in the first 14 days, we'll refund you.",
+  },
+  {
+    question: "Can I upgrade or downgrade my plan later?",
+    answer:
+      "Absolutely. You'll be able to switch between tiers at any time. Upgrades take effect immediately, and downgrades apply at your next billing cycle.",
   },
 ];
 
