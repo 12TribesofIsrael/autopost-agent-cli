@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
-import { Link } from "react-router-dom";
+import bmbLogo from "@/assets/bmb-logo.png";
 
 const Hero = () => {
   const scrollToBetaForm = () => {
@@ -25,6 +24,17 @@ const Hero = () => {
           <Button size="lg" onClick={scrollToBetaForm}>
             Join the Free Beta
           </Button>
+          
+          <div className="mt-10 flex flex-col items-center gap-2">
+            <img 
+              src={bmbLogo} 
+              alt="BMB AI Automations" 
+              className="h-16 w-auto"
+            />
+            <p className="text-xs text-muted-foreground">
+              Powered by <span className="font-semibold">BMBAIAUTOMATIONS</span>
+            </p>
+          </div>
         </div>
       </div>
     </section>
