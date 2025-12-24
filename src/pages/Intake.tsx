@@ -13,41 +13,54 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import PlatformIntake from "@/components/intake/PlatformIntake";
+import PlatformIntake, { type PlatformData, type PostTypes } from "@/components/intake/PlatformIntake";
 import Navigation from "@/components/Navigation";
 import { CheckCircle, ArrowLeft } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
-interface PlatformData {
-  hasAccount: boolean | null;
-  handleOrUrl: string;
-  addToWorkflow: boolean;
-  wantsAccountCreation: boolean | null;
-}
-
 type PlatformsState = Record<string, PlatformData>;
 
-const PLATFORMS = [
+type PlatformConfig = {
+  key: string;
+  name: string;
+  placeholder: string;
+  supportedPostTypes?: Array<keyof PostTypes>;
+};
+
+const PLATFORMS: PlatformConfig[] = [
   { key: "youtube", name: "YouTube", placeholder: "e.g. https://youtube.com/@yourchannel" },
   { key: "tiktok", name: "TikTok", placeholder: "e.g. @yourhandle" },
-  { key: "facebook", name: "Facebook", placeholder: "e.g. https://facebook.com/yourpage" },
-  { key: "instagram", name: "Instagram", placeholder: "e.g. @yourhandle" },
+  { key: "facebook", name: "Facebook", placeholder: "e.g. https://facebook.com/yourpage", supportedPostTypes: ["feed", "stories"] },
+  { key: "instagram", name: "Instagram", placeholder: "e.g. @yourhandle", supportedPostTypes: ["reels", "stories"] },
   { key: "pinterest", name: "Pinterest", placeholder: "e.g. https://pinterest.com/yourprofile" },
   { key: "linkedin", name: "LinkedIn", placeholder: "e.g. https://linkedin.com/company/yourcompany" },
-  { key: "snapchat", name: "Snapchat", placeholder: "e.g. @yourhandle" },
+  { key: "snapchat", name: "Snapchat", placeholder: "e.g. @yourhandle", supportedPostTypes: ["stories"] },
 ];
 
-const createEmptyPlatformData = (): PlatformData => ({
-  hasAccount: null,
-  handleOrUrl: "",
-  addToWorkflow: false,
-  wantsAccountCreation: null,
-});
+const createEmptyPlatformData = (key: string): PlatformData => {
+  const base: PlatformData = {
+    hasAccount: null,
+    handleOrUrl: "",
+    addToWorkflow: false,
+    wantsAccountCreation: null,
+  };
+
+  // Initialize postTypes for platforms that support them
+  if (key === "instagram") {
+    base.postTypes = { reels: true, stories: false };
+  } else if (key === "facebook") {
+    base.postTypes = { feed: true, stories: false };
+  } else if (key === "snapchat") {
+    base.postTypes = { stories: true };
+  }
+
+  return base;
+};
 
 const createInitialPlatformsState = (): PlatformsState => {
   const state: PlatformsState = {};
   PLATFORMS.forEach((p) => {
-    state[p.key] = createEmptyPlatformData();
+    state[p.key] = createEmptyPlatformData(p.key);
   });
   return state;
 };
@@ -268,6 +281,7 @@ const Intake = () => {
                     placeholder={platform.placeholder}
                     data={platforms[platform.key]}
                     onChange={handlePlatformChange}
+                    supportedPostTypes={platform.supportedPostTypes}
                   />
                 ))}
               </div>
