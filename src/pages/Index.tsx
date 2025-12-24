@@ -1,5 +1,6 @@
 import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
+import SocialProof from "@/components/SocialProof";
 import HowItWorks from "@/components/HowItWorks";
 import Pricing from "@/components/Pricing";
 import IntakeForm from "@/components/IntakeForm";
@@ -11,6 +12,7 @@ const Index = () => {
       <Navigation />
       <main>
         <Hero />
+        <SocialProof />
         <HowItWorks />
         <Pricing />
         <IntakeForm />

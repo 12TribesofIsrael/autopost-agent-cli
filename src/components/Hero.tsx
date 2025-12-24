@@ -11,10 +11,12 @@ const Hero = () => {
       <div className="container">
         <div className="max-w-3xl mx-auto text-center animate-fade-in-up">
           <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight md:text-5xl lg:text-[3.25rem]">
-            Upload once. Post everywhere.{" "}
-            <span className="text-primary">In under 2 hours.</span>{" "}
-            <span className="text-muted-foreground text-2xl md:text-3xl">(Beta)</span>
+            Stop Wasting Time.{" "}
+            <span className="text-primary">Start Going Viral.</span>
           </h1>
+          <p className="mb-2 text-xl font-semibold text-foreground/90">
+            One upload. Three platforms. Under 2 hours.
+          </p>
           <p className="mb-4 text-lg text-muted-foreground">
             I help boxers, gyms, fitness businesses, and daycare owners who post short vertical videos get their content onto TikTok, Instagram Reels, and YouTube Shorts—without uploading to each app one by one.
           </p>
