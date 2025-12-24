@@ -73,7 +73,7 @@ const WhyMultiPlatform = () => {
           <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
             TikTok, Instagram Reels, and YouTube Shorts combined reach <span className="text-foreground font-semibold">billions of users daily</span>. 
             YouTube Shorts alone has over <span className="text-foreground font-semibold">5 trillion all-time views</span>. 
-            When you post on all three, you multiply your chances of going viral—without multiplying your effort.
+            Post to your favorite platform once, and we'll make sure you're everywhere—without the extra effort.
           </p>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
             <div className="bg-background/80 px-4 py-2 rounded-full border border-border">
