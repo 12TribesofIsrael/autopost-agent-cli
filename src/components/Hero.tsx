@@ -13,14 +13,14 @@ const Hero = () => {
       <div className="container">
         <div className="max-w-3xl mx-auto text-center animate-fade-in-up">
           <h1 className="mb-6 text-4xl font-extrabold leading-tight tracking-tight md:text-5xl lg:text-[3.25rem]">
-            Stop Wasting Time.{" "}
-            <span className="text-primary">Start Going Viral.</span>
+            Brands Need to Be{" "}
+            <span className="text-primary">Everywhere.</span>
           </h1>
           <p className="mb-2 text-xl font-semibold text-foreground/90">
-            Post once. We handle the rest.
+            Let us help you build your brand.
           </p>
           <p className="mb-4 text-lg text-muted-foreground">
-            Upload to your favorite platform—TikTok, YouTube, or Instagram—and we'll automatically repurpose and distribute your content to all the others. No extra uploads. No extra work.
+            If you really want to grow your brand, you came to the right place. We repurpose and distribute your content across every platform—so you stay visible without the extra work.
           </p>
           <p className="mb-8 text-sm text-muted-foreground/80">
             Now accepting early access clients — limited spots available.
