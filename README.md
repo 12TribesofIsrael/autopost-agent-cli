@@ -1,73 +1,88 @@
-# Welcome to your Lovable project
+# BMB Autopost
 
-## Project info
+A social media automation platform that helps businesses and content creators streamline their multi-platform posting workflow.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Overview
 
-## How can I edit this code?
+BMB Autopost simplifies social media management by automating content distribution across multiple platforms. Whether you're a boxer, gym owner, restaurant, or local business, this platform helps you maintain a consistent social media presence without the manual work.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **Multi-Platform Support**: Connect and manage Instagram, TikTok, YouTube, Facebook, and X (Twitter)
+- **Automated Workflows**: Set up automated posting workflows between platforms
+- **Intake Form**: Easy onboarding process to capture your social media presence and goals
+- **User Dashboard**: Manage your connected accounts and posting preferences
+- **Customizable Posting Frequency**: Choose from multiple posting schedules to match your content strategy
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React 18 with TypeScript
+- **Styling**: Tailwind CSS with custom design system
+- **UI Components**: shadcn/ui + Radix UI primitives
+- **Animations**: Framer Motion
+- **Routing**: React Router v6
+- **Backend**: Lovable Cloud (Supabase)
+- **Build Tool**: Vite
 
-**Use your preferred IDE**
+## Getting Started
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Prerequisites
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Node.js (v18 or higher recommended)
+- npm or bun
 
-Follow these steps:
+### Installation
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+```bash
+# Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
+# Navigate to the project directory
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Project Structure
 
-**Use GitHub Codespaces**
+```
+src/
+├── components/          # Reusable UI components
+│   ├── ui/             # shadcn/ui components
+│   ├── onboarding/     # Onboarding wizard components
+│   └── intake/         # Intake form components
+├── contexts/           # React context providers
+├── hooks/              # Custom React hooks
+├── integrations/       # External service integrations
+├── lib/                # Utility functions
+└── pages/              # Route page components
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Key Pages
 
-## What technologies are used for this project?
+- `/` - Landing page with hero, features, and pricing
+- `/intake` - Client intake form for new users
+- `/auth` - Authentication (sign in/sign up)
+- `/onboarding` - Guided onboarding wizard
+- `/dashboard` - User dashboard (authenticated)
 
-This project is built with:
+## Environment Variables
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The project uses environment variables for configuration. These are automatically managed when using Lovable Cloud:
 
-## How can I deploy this project?
+- `VITE_SUPABASE_URL` - Backend API URL
+- `VITE_SUPABASE_PUBLISHABLE_KEY` - Public API key
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Deployment
 
-## Can I connect a custom domain to my Lovable project?
+Deploy easily through Lovable by clicking **Share → Publish** in the editor, or self-host using any static hosting provider that supports Vite/React applications.
 
-Yes, you can!
+## License
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Private - All rights reserved
