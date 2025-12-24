@@ -122,10 +122,16 @@ export default function Dashboard() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <span className="text-xl font-bold tracking-tight">
-              BMB<span className="text-primary">Automations</span>
+              Grow<span className="text-primary">YourBrand</span>
             </span>
           </Link>
           <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" className="gap-2" asChild>
+              <Link to="/admin/beta">
+                <BarChart3 className="w-4 h-4" />
+                Admin
+              </Link>
+            </Button>
             <Button variant="ghost" size="sm" className="gap-2">
               <Settings className="w-4 h-4" />
               Settings

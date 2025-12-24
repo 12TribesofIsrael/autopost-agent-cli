@@ -23,7 +23,7 @@ export function WelcomeStep() {
       {/* Header */}
       <div className="text-center space-y-4">
         <h1 className="text-3xl md:text-4xl font-bold">
-          Welcome to <span className="text-gradient">Autopost Agent</span>
+          Welcome to <span className="text-gradient">GrowYourBrand</span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-lg mx-auto">
           Turn one post into content everywhere. Let's connect your business and set up your automations.
