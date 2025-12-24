@@ -8,7 +8,7 @@ const stepLabels = [
   'Brand Basics',
   'Connect Accounts',
   'Workflows',
-  'Auto-Publish & Test',
+  'Final Setup',
 ];
 
 interface WizardLayoutProps {
@@ -32,14 +32,14 @@ export function WizardLayout({ children }: WizardLayoutProps) {
           {/* Left: Logo */}
           <div className="flex items-center gap-2">
             <span className="text-xl font-bold tracking-tight">
-              Autopost<span className="text-primary">Agent</span>
+              Grow<span className="text-primary">YourBrand</span>
             </span>
           </div>
 
           {/* Center: Step Progress */}
           <div className="hidden md:flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">
-              Step {currentStep === 0 ? 1 : currentStep} of {totalSteps - 1}
+              Step {currentStep + 1} of {totalSteps}
             </span>
             <span className="text-muted-foreground">•</span>
             <span className="font-medium">{stepLabels[currentStep]}</span>
