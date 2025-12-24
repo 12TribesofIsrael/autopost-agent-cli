@@ -22,8 +22,8 @@ const Hero = () => {
           <p className="mb-4 text-lg text-muted-foreground">
             I help boxers, gyms, fitness businesses, and daycare owners who post short vertical videos get their content onto TikTok, Instagram Reels, and YouTube Shorts—without uploading to each app one by one.
           </p>
-          <p className="mb-8 text-sm text-muted-foreground/80 italic">
-            Built by a 13-year-old founder. Currently running a small free beta for feedback.
+          <p className="mb-8 text-sm text-muted-foreground/80">
+            Now accepting early access clients — limited spots available.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button size="lg" onClick={scrollToBetaForm}>
