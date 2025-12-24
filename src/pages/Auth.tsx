@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, Home } from 'lucide-react';
 import { z } from 'zod';
 
 const authSchema = z.object({
@@ -132,17 +132,35 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold tracking-tight">
-            Autopost<span className="text-primary">Agent</span>
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            {isLogin ? 'Sign in to your account' : 'Create your account'}
-          </p>
-        </div>
+    <div className="min-h-screen flex flex-col p-4">
+      {/* Navigation */}
+      <nav className="flex items-center justify-between py-4 max-w-md mx-auto w-full">
+        <Link 
+          to="/" 
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Home className="w-4 h-4" />
+          <span className="text-sm">Back to Home</span>
+        </Link>
+        <Link 
+          to="/intake" 
+          className="text-sm text-primary hover:underline"
+        >
+          Start Intake
+        </Link>
+      </nav>
+
+      <div className="flex-1 flex items-center justify-center">
+        <div className="w-full max-w-md">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold tracking-tight">
+              Autopost<span className="text-primary">Agent</span>
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              {isLogin ? 'Sign in to your account' : 'Create your account'}
+            </p>
+          </div>
 
         {/* Auth Card */}
         <div className="p-8 rounded-2xl border border-border/50 bg-card shadow-soft">
@@ -219,6 +237,7 @@ export default function Auth() {
                 </>
               )}
             </button>
+          </div>
           </div>
         </div>
       </div>
