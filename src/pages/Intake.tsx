@@ -177,10 +177,7 @@ const Intake = () => {
           <div className="mb-8 animate-fade-in">
             <h1 className="text-3xl font-bold mb-2">Client Intake – Autopost Setup</h1>
             <p className="text-muted-foreground">
-              Answer a few questions so we can design the right autopost workflow for your business.
-            </p>
-            <p className="mt-4 text-sm text-muted-foreground/80 bg-muted/50 border border-border rounded-lg px-4 py-3">
-              This is a beta. A 13-year-old founder is building this with adult support. Some services like account creation and payments are handled by adults only.
+              Answer a few questions so we can design the right autopost workflow for your brand.
             </p>
           </div>
 
