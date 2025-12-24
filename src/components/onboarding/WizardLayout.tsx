@@ -1,7 +1,8 @@
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { Button } from '@/components/ui/button';
-import { Check, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Check, Loader2, LogOut, Home } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 const stepLabels = [
   'Welcome',
@@ -17,11 +18,17 @@ interface WizardLayoutProps {
 
 export function WizardLayout({ children }: WizardLayoutProps) {
   const { currentStep, totalSteps, saveProgress, saving } = useOnboarding();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSaveAndExit = async () => {
     await saveProgress();
     navigate('/dashboard');
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
   };
 
   return (
@@ -30,11 +37,11 @@ export function WizardLayout({ children }: WizardLayoutProps) {
       <header className="sticky top-0 z-50 glass border-b border-border/40">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           {/* Left: Logo */}
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <span className="text-xl font-bold tracking-tight">
               Grow<span className="text-primary">YourBrand</span>
             </span>
-          </div>
+          </Link>
 
           {/* Center: Step Progress */}
           <div className="hidden md:flex items-center gap-2 text-sm">
@@ -45,16 +52,28 @@ export function WizardLayout({ children }: WizardLayoutProps) {
             <span className="font-medium">{stepLabels[currentStep]}</span>
           </div>
 
-          {/* Right: Save & Exit */}
-          <Button 
-            variant="ghost" 
-            onClick={handleSaveAndExit} 
-            className="text-muted-foreground hover:text-foreground"
-            disabled={saving}
-          >
-            {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-            Save & Exit
-          </Button>
+          {/* Right: Navigation */}
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleSaveAndExit} 
+              className="text-muted-foreground hover:text-foreground gap-2"
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Home className="w-4 h-4" />}
+              <span className="hidden sm:inline">Dashboard</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleSignOut} 
+              className="text-muted-foreground hover:text-foreground gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </Button>
+          </div>
         </div>
       </header>
 
