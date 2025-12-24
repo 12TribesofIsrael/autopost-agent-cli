@@ -49,12 +49,6 @@ const Navigation = () => {
               Home
             </Link>
           )}
-          <Link
-            to="/intake"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Intake
-          </Link>
           <Button variant="nav" size="sm" asChild>
             <Link to="/auth">Sign In</Link>
           </Button>
@@ -120,13 +114,6 @@ const Navigation = () => {
                   Home
                 </Link>
               )}
-              <Link
-                to="/intake"
-                onClick={closeMobileMenu}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground py-2"
-              >
-                Intake
-              </Link>
               <Button variant="nav" size="sm" asChild className="w-fit">
                 <Link to="/auth" onClick={closeMobileMenu}>Sign In</Link>
               </Button>
