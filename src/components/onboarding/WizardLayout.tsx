@@ -1,8 +1,10 @@
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { Button } from '@/components/ui/button';
-import { Check, Loader2, LogOut, Home } from 'lucide-react';
+import { Check, Loader2, LogOut, Home, Shield } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 const stepLabels = [
   'Welcome',
@@ -18,8 +20,21 @@ interface WizardLayoutProps {
 
 export function WizardLayout({ children }: WizardLayoutProps) {
   const { currentStep, totalSteps, saveProgress, saving } = useOnboarding();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!user) return;
+      const { data } = await supabase.rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin'
+      });
+      setIsAdmin(!!data);
+    };
+    checkAdmin();
+  }, [user]);
 
   const handleSaveAndExit = async () => {
     await saveProgress();
@@ -54,6 +69,17 @@ export function WizardLayout({ children }: WizardLayoutProps) {
 
           {/* Right: Navigation */}
           <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigate('/admin/beta')} 
+                className="text-primary hover:text-primary/80 gap-2"
+              >
+                <Shield className="w-4 h-4" />
+                <span className="hidden sm:inline">Admin</span>
+              </Button>
+            )}
             <Button 
               variant="ghost" 
               size="sm"
