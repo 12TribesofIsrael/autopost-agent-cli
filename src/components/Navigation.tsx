@@ -34,6 +34,12 @@ const Navigation = () => {
               >
                 Pricing
               </a>
+              <a
+                href="#faq"
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                FAQ
+              </a>
             </>
           ) : (
             <Link
@@ -96,6 +102,13 @@ const Navigation = () => {
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground py-2"
                   >
                     Pricing
+                  </a>
+                  <a
+                    href="#faq"
+                    onClick={closeMobileMenu}
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground py-2"
+                  >
+                    FAQ
                   </a>
                 </>
               ) : (
