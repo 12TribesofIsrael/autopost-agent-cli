@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      intake_submissions: {
+        Row: {
+          business_name: string | null
+          business_type: string
+          created_at: string
+          email: string
+          extra_notes: string | null
+          full_name: string
+          id: string
+          pain_point: string | null
+          platforms: Json
+          posting_frequency: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_name?: string | null
+          business_type: string
+          created_at?: string
+          email: string
+          extra_notes?: string | null
+          full_name: string
+          id?: string
+          pain_point?: string | null
+          platforms?: Json
+          posting_frequency?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string | null
+          business_type?: string
+          created_at?: string
+          email?: string
+          extra_notes?: string | null
+          full_name?: string
+          id?: string
+          pain_point?: string | null
+          platforms?: Json
+          posting_frequency?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           brand_voice: string | null

@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import bmbLogo from "@/assets/bmb-logo.png";
 
 const Hero = () => {
+  const navigate = useNavigate();
+
   const scrollToBetaForm = () => {
     document.getElementById("beta-form")?.scrollIntoView({ behavior: "smooth" });
   };
-
   return (
     <section className="py-14 md:py-20">
       <div className="container">
@@ -23,9 +25,14 @@ const Hero = () => {
           <p className="mb-8 text-sm text-muted-foreground/80 italic">
             Built by a 13-year-old founder. Currently running a small free beta for feedback.
           </p>
-          <Button size="lg" onClick={scrollToBetaForm}>
-            Join the Free Beta
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button size="lg" onClick={scrollToBetaForm}>
+              Join the Free Beta
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => navigate("/intake")}>
+              Start Intake
+            </Button>
+          </div>
           
           <div className="mt-10 flex flex-col items-center gap-2">
             <img 
