@@ -96,19 +96,42 @@ const IntakeForm = () => {
 
     setIsSubmitting(true);
 
+    const formData = {
+      name: name.trim(),
+      email: email.trim(),
+      businessType: businessType.trim(),
+      platforms: selectedPlatforms,
+      videosPerWeek,
+      painPoint: painPoint.trim() || "",
+    };
+
+    // Log to console for debugging
+    console.log("Beta form submission:", formData);
+
     try {
       // Insert into the database
       const { error } = await supabase.from("video_requests").insert({
-        name: name.trim(),
-        email: email.trim(),
+        name: formData.name,
+        email: formData.email,
         video_link: "", // No video link for beta signup
-        platforms: selectedPlatforms,
-        notes: `Business Type: ${businessType.trim()}\nVideos per week: ${videosPerWeek}\nPain point: ${painPoint.trim() || "Not provided"}`,
-        frequency: videosPerWeek,
+        platforms: formData.platforms,
+        notes: `Business Type: ${formData.businessType}\nVideos per week: ${formData.videosPerWeek}\nPain point: ${formData.painPoint || "Not provided"}`,
+        frequency: formData.videosPerWeek,
         drive_upload_status: "beta_request",
       });
 
       if (error) throw error;
+
+      console.log("Beta request saved to database successfully");
+
+      // Send email notification (non-blocking)
+      supabase.functions.invoke("send-beta-notification", {
+        body: formData,
+      }).then((res) => {
+        console.log("Email notification response:", res);
+      }).catch((err) => {
+        console.error("Email notification error:", err);
+      });
 
       setIsSubmitted(true);
     } catch (error: any) {
