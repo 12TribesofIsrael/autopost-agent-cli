@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, XCircle, Mail, Clock, User, Building } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Mail, Clock, User, Building, LogOut, Home } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Table,
   TableBody,
@@ -43,10 +44,16 @@ interface BetaRequest {
 const AdminBeta = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signOut } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [requests, setRequests] = useState<BetaRequest[]>([]);
   const [sendingEmail, setSendingEmail] = useState<string | null>(null);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   useEffect(() => {
     checkAdminAndFetch();
@@ -218,6 +225,33 @@ const AdminBeta = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Universal Navigation */}
+      <header className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center justify-between">
+          <span className="font-bold text-xl text-primary">GrowYourBrand</span>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => navigate('/dashboard')} 
+              className="text-muted-foreground hover:text-foreground gap-2"
+            >
+              <Home className="w-4 h-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={handleSignOut} 
+              className="text-muted-foreground hover:text-foreground gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </Button>
+          </div>
+        </div>
+      </header>
+
       <div className="container py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Beta Approvals</h1>
