@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Turnstile } from "@marsidev/react-turnstile";
 
 // Turnstile site key - this is a public key, safe to include in code
 // Get yours at: https://dash.cloudflare.com/?to=/:account/turnstile
@@ -51,7 +50,69 @@ const IntakeForm = () => {
   const [videosError, setVideosError] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState<string | null>(null);
 
-  const turnstileRef = useRef<any>(null);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | null>(null);
+
+  // Load Turnstile script and render widget
+  useEffect(() => {
+    const loadTurnstile = () => {
+      // Check if script already exists
+      if (document.getElementById('turnstile-script')) {
+        renderWidget();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.id = 'turnstile-script';
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      script.async = true;
+      script.onload = () => renderWidget();
+      document.head.appendChild(script);
+    };
+
+    const renderWidget = () => {
+      if (!turnstileRef.current || widgetIdRef.current) return;
+      
+      const win = window as any;
+      if (!win.turnstile) {
+        setTimeout(renderWidget, 100);
+        return;
+      }
+
+      widgetIdRef.current = win.turnstile.render(turnstileRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        theme: 'auto',
+        callback: (token: string) => {
+          setTurnstileToken(token);
+          setCaptchaError(null);
+        },
+        'error-callback': () => {
+          setTurnstileToken(null);
+          setCaptchaError("Security check failed. Please try again.");
+        },
+        'expired-callback': () => {
+          setTurnstileToken(null);
+        },
+      });
+    };
+
+    loadTurnstile();
+
+    return () => {
+      const win = window as any;
+      if (widgetIdRef.current && win.turnstile) {
+        win.turnstile.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
+      }
+    };
+  }, []);
+
+  const resetTurnstile = useCallback(() => {
+    const win = window as any;
+    if (widgetIdRef.current && win.turnstile) {
+      win.turnstile.reset(widgetIdRef.current);
+    }
+  }, []);
 
   const handlePlatformChange = (platformId: string, checked: boolean) => {
     setSelectedPlatforms((prev) =>
@@ -178,7 +239,7 @@ const IntakeForm = () => {
         variant: "destructive",
       });
       // Reset Turnstile on error
-      turnstileRef.current?.reset();
+      resetTurnstile();
       setTurnstileToken(null);
     } finally {
       setIsSubmitting(false);
@@ -196,7 +257,7 @@ const IntakeForm = () => {
     setVideosPerWeek("");
     setPainPoint("");
     setTurnstileToken(null);
-    turnstileRef.current?.reset();
+    resetTurnstile();
   };
 
   // Success state
@@ -453,24 +514,7 @@ const IntakeForm = () => {
 
               {/* Turnstile CAPTCHA */}
               <div className="space-y-2">
-                <Turnstile
-                  ref={turnstileRef}
-                  siteKey={TURNSTILE_SITE_KEY}
-                  onSuccess={(token) => {
-                    setTurnstileToken(token);
-                    setCaptchaError(null);
-                  }}
-                  onError={() => {
-                    setTurnstileToken(null);
-                    setCaptchaError("Security check failed. Please try again.");
-                  }}
-                  onExpire={() => {
-                    setTurnstileToken(null);
-                  }}
-                  options={{
-                    theme: "auto",
-                  }}
-                />
+                <div ref={turnstileRef} id="turnstile-container"></div>
                 {captchaError && (
                   <p className="text-sm text-destructive">{captchaError}</p>
                 )}
