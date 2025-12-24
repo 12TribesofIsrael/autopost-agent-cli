@@ -3,12 +3,31 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 
-interface PlatformData {
+export type PostTypes = {
+  reels?: boolean;
+  feed?: boolean;
+  stories?: boolean;
+  shorts?: boolean;
+  tiktoks?: boolean;
+  spotlight?: boolean;
+};
+
+export interface PlatformData {
   hasAccount: boolean | null;
   handleOrUrl: string;
   addToWorkflow: boolean;
   wantsAccountCreation: boolean | null;
+  postTypes?: PostTypes;
 }
+
+const POST_TYPE_LABELS: Record<keyof PostTypes, string> = {
+  reels: "Reels",
+  feed: "Feed",
+  stories: "Stories",
+  shorts: "Shorts",
+  tiktoks: "TikToks",
+  spotlight: "Spotlight",
+};
 
 interface PlatformIntakeProps {
   platformName: string;
@@ -16,6 +35,7 @@ interface PlatformIntakeProps {
   placeholder: string;
   data: PlatformData;
   onChange: (key: string, data: PlatformData) => void;
+  supportedPostTypes?: Array<keyof PostTypes>;
 }
 
 const PlatformIntake = ({
@@ -24,6 +44,7 @@ const PlatformIntake = ({
   placeholder,
   data,
   onChange,
+  supportedPostTypes,
 }: PlatformIntakeProps) => {
   const handleHasAccountChange = (value: string) => {
     const hasAccount = value === "yes";
@@ -48,6 +69,20 @@ const PlatformIntake = ({
   const handleCreationChange = (value: string) => {
     onChange(platformKey, { ...data, wantsAccountCreation: value === "yes" });
   };
+
+  const handlePostTypeChange = (postType: keyof PostTypes, checked: boolean) => {
+    const newPostTypes = {
+      ...data.postTypes,
+      [postType]: checked,
+    };
+    onChange(platformKey, { ...data, postTypes: newPostTypes });
+  };
+
+  const showPostTypes = 
+    supportedPostTypes && 
+    supportedPostTypes.length > 0 && 
+    data.hasAccount === true && 
+    data.addToWorkflow === true;
 
   return (
     <div className="border border-border rounded-xl p-5 bg-card/50">
@@ -102,6 +137,37 @@ const PlatformIntake = ({
               Add this {platformName} account to my autopost workflow
             </Label>
           </div>
+
+          {/* Post Type Selection */}
+          {showPostTypes && (
+            <div className="mt-4 space-y-3 p-3 bg-muted/30 rounded-lg">
+              <Label className="text-sm text-foreground font-medium">
+                Where should this content go on {platformName}?
+              </Label>
+              <div className="flex flex-wrap gap-4">
+                {supportedPostTypes.map((postType) => (
+                  <div key={postType} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${platformKey}-posttype-${postType}`}
+                      checked={data.postTypes?.[postType] ?? false}
+                      onCheckedChange={(checked) => handlePostTypeChange(postType, checked as boolean)}
+                    />
+                    <Label 
+                      htmlFor={`${platformKey}-posttype-${postType}`} 
+                      className="font-normal cursor-pointer text-sm"
+                    >
+                      {POST_TYPE_LABELS[postType]}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              {platformKey === "instagram" && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  We use this to decide whether to configure your workflows for Reels, Stories, or both inside our automation tools.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
