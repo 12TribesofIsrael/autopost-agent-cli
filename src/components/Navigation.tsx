@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Navigation = () => {
   const location = useLocation();
@@ -64,48 +65,62 @@ const Navigation = () => {
       </div>
 
       {/* Mobile Navigation */}
-      {mobileMenuOpen && (
-        <nav className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-md">
-          <div className="container py-4 flex flex-col gap-4">
-            {isHome ? (
-              <>
-                <a
-                  href="#how"
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.nav
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-md overflow-hidden"
+          >
+            <motion.div
+              initial={{ y: -10 }}
+              animate={{ y: 0 }}
+              exit={{ y: -10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="container py-4 flex flex-col gap-4"
+            >
+              {isHome ? (
+                <>
+                  <a
+                    href="#how"
+                    onClick={closeMobileMenu}
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground py-2"
+                  >
+                    How it works
+                  </a>
+                  <a
+                    href="#pricing"
+                    onClick={closeMobileMenu}
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground py-2"
+                  >
+                    Pricing
+                  </a>
+                </>
+              ) : (
+                <Link
+                  to="/"
                   onClick={closeMobileMenu}
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground py-2"
                 >
-                  How it works
-                </a>
-                <a
-                  href="#pricing"
-                  onClick={closeMobileMenu}
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground py-2"
-                >
-                  Pricing
-                </a>
-              </>
-            ) : (
+                  Home
+                </Link>
+              )}
               <Link
-                to="/"
+                to="/intake"
                 onClick={closeMobileMenu}
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground py-2"
               >
-                Home
+                Intake
               </Link>
-            )}
-            <Link
-              to="/intake"
-              onClick={closeMobileMenu}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground py-2"
-            >
-              Intake
-            </Link>
-            <Button variant="nav" size="sm" asChild className="w-fit">
-              <Link to="/auth" onClick={closeMobileMenu}>Sign In</Link>
-            </Button>
-          </div>
-        </nav>
-      )}
+              <Button variant="nav" size="sm" asChild className="w-fit">
+                <Link to="/auth" onClick={closeMobileMenu}>Sign In</Link>
+              </Button>
+            </motion.div>
+          </motion.nav>
+        )}
+      </AnimatePresence>
     </header>
   );
 };
