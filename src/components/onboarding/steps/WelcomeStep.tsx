@@ -33,7 +33,7 @@ export function WelcomeStep() {
       {/* Benefits */}
       <div className="gradient-card rounded-2xl p-6 border border-border/50 space-y-3">
         <p className="text-muted-foreground">
-          ✨ Perfect for boxers, gyms, and local businesses who want to look active online without living on social media.
+          ✨ Perfect for boxers, athletes, entrepreneurs, gyms, and local businesses who want to look active online without living on social media.
         </p>
         <p className="text-muted-foreground">
           🚀 We'll walk you through this once, then your content runs on autopilot.
