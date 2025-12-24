@@ -30,6 +30,7 @@ const IntakeForm = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [businessType, setBusinessType] = useState("");
+  const [sourcePlatform, setSourcePlatform] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [videosPerWeek, setVideosPerWeek] = useState("");
   const [painPoint, setPainPoint] = useState("");
@@ -37,6 +38,7 @@ const IntakeForm = () => {
   const [nameError, setNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [businessTypeError, setBusinessTypeError] = useState<string | null>(null);
+  const [sourceError, setSourceError] = useState<string | null>(null);
   const [platformError, setPlatformError] = useState<string | null>(null);
   const [videosError, setVideosError] = useState<string | null>(null);
 
@@ -57,6 +59,7 @@ const IntakeForm = () => {
     setNameError(null);
     setEmailError(null);
     setBusinessTypeError(null);
+    setSourceError(null);
     setPlatformError(null);
     setVideosError(null);
 
@@ -82,9 +85,15 @@ const IntakeForm = () => {
       return;
     }
 
-    // Validate platforms
+    // Validate source platform
+    if (!sourcePlatform) {
+      setSourceError("Please select your primary posting platform");
+      return;
+    }
+
+    // Validate destination platforms
     if (selectedPlatforms.length === 0) {
-      setPlatformError("Please select at least one platform");
+      setPlatformError("Please select at least one destination platform");
       return;
     }
 
@@ -100,6 +109,7 @@ const IntakeForm = () => {
       name: name.trim(),
       email: email.trim(),
       businessType: businessType.trim(),
+      sourcePlatform,
       platforms: selectedPlatforms,
       videosPerWeek,
       painPoint: painPoint.trim() || "",
@@ -115,7 +125,7 @@ const IntakeForm = () => {
         email: formData.email,
         video_link: "", // No video link for beta signup
         platforms: formData.platforms,
-        notes: `Business Type: ${formData.businessType}\nVideos per week: ${formData.videosPerWeek}\nPain point: ${formData.painPoint || "Not provided"}`,
+        notes: `Business Type: ${formData.businessType}\nSource Platform: ${formData.sourcePlatform}\nVideos per week: ${formData.videosPerWeek}\nPain point: ${formData.painPoint || "Not provided"}`,
         frequency: formData.videosPerWeek,
         drive_upload_status: "beta_request",
       });
@@ -151,6 +161,7 @@ const IntakeForm = () => {
     setName("");
     setEmail("");
     setBusinessType("");
+    setSourcePlatform("");
     setSelectedPlatforms([]);
     setVideosPerWeek("");
     setPainPoint("");
@@ -168,7 +179,7 @@ const IntakeForm = () => {
               </div>
               <h2 className="mb-2 text-2xl font-bold">Thanks for joining the beta! 🎉</h2>
               <p className="mb-6 text-muted-foreground">
-                I'll review your info and email you with next steps. I'm a 13-year-old building this, so I may limit beta spots to a small group while I test.
+                We'll review your info and email you with next steps. Beta spots are limited while we refine the experience.
               </p>
               <Button onClick={resetForm} variant="outline">
                 Submit another request
@@ -190,7 +201,7 @@ const IntakeForm = () => {
               Join the Free Beta
             </h2>
             <p className="text-lg text-muted-foreground">
-              Tell me a bit about your content, and I'll invite you to try Autopost Agent. You upload one video, choose your platforms, and I help you get it posted everywhere.
+              Tell us where you post and where you want to expand. You keep posting to your favorite platform—we'll handle distributing it everywhere else.
             </p>
           </div>
 
@@ -258,11 +269,36 @@ const IntakeForm = () => {
                 )}
               </div>
 
-              {/* Platform Selection */}
+              {/* Source Platform Selection */}
+              <div className="space-y-2">
+                <Label>Where do you currently post your videos?</Label>
+                <p className="text-sm text-muted-foreground">This is your primary source—we'll pull content from here.</p>
+                <Select value={sourcePlatform} onValueChange={(value) => {
+                  setSourcePlatform(value);
+                  setSourceError(null);
+                }}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select your main platform" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {platforms.filter(p => p.id !== "other").map((platform) => (
+                      <SelectItem key={platform.id} value={platform.id}>
+                        {platform.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {sourceError && (
+                  <p className="text-sm text-destructive">{sourceError}</p>
+                )}
+              </div>
+
+              {/* Destination Platform Selection */}
               <div className="space-y-3">
-                <Label>Which platforms do you post on?</Label>
+                <Label>Where do you want your content distributed?</Label>
+                <p className="text-sm text-muted-foreground">Select all the platforms you want us to post to.</p>
                 <div className="flex flex-wrap gap-x-4 gap-y-3">
-                  {platforms.map((platform) => (
+                  {platforms.filter(p => p.id !== sourcePlatform).map((platform) => (
                     <div key={platform.id} className="flex items-center gap-2">
                       <Checkbox
                         id={platform.id}
