@@ -41,7 +41,7 @@ const Hero = () => {
               className="h-16 w-auto"
             />
             <p className="text-xs text-muted-foreground">
-              Powered by <span className="font-semibold">BMBAIAUTOMATIONS</span>
+              Powered by <span className="font-semibold">GrowYourBrand</span>
             </p>
           </div>
         </div>

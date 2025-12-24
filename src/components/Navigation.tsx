@@ -15,7 +15,7 @@ const Navigation = () => {
     <header className="sticky top-0 z-50 glass border-b border-border/40">
       <div className="container flex items-center justify-between py-4">
         <Link to="/" className="text-xl font-bold tracking-tight">
-          Autopost<span className="text-primary">Agent</span>
+          Grow<span className="text-primary">YourBrand</span>
         </Link>
 
         {/* Desktop Navigation */}
