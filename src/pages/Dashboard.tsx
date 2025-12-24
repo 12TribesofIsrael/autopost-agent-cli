@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { X, Sparkles, Plus, Settings, BarChart3, Video, Clock, LogOut, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { X, Sparkles, Plus, Settings, BarChart3, Video, Clock, LogOut, Loader2, Upload, ArrowRight, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -12,8 +13,21 @@ interface DashboardData {
   workflowsActive: number;
 }
 
+const platformNames: Record<string, string> = {
+  tiktok: 'TikTok',
+  instagram: 'Instagram',
+  youtube: 'YouTube',
+  facebook: 'Facebook',
+  twitch: 'Twitch',
+  snapchat: 'Snapchat',
+  podcast: 'Podcast',
+  googledrive: 'Google Drive',
+  dropbox: 'Dropbox',
+};
+
 export default function Dashboard() {
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(false);
+  const [showCreatePostDialog, setShowCreatePostDialog] = useState(false);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const { user, loading: authLoading, signOut } = useAuth();
@@ -84,6 +98,11 @@ export default function Dashboard() {
     navigate('/');
   };
 
+  const getMainPlatformName = () => {
+    if (!dashboardData?.mainPlatform) return 'your source platform';
+    return platformNames[dashboardData.mainPlatform] || dashboardData.mainPlatform;
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -103,7 +122,7 @@ export default function Dashboard() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <span className="text-xl font-bold tracking-tight">
-              Autopost<span className="text-primary">Agent</span>
+              BMB<span className="text-primary">Automations</span>
             </span>
           </Link>
           <div className="flex items-center gap-4">
@@ -133,9 +152,12 @@ export default function Dashboard() {
                     🎉 Setup Complete
                   </h2>
                   <p className="text-muted-foreground mt-1">
-                    Your workflows are live. Post on {dashboardData?.mainPlatform} or click "Create New Post" to let Autopost Agent push it everywhere.
+                    Your workflows are live. Post on {getMainPlatformName()} and we'll automatically repurpose it everywhere.
                   </p>
-                  <Button className="mt-4 gradient-primary glow-primary gap-2">
+                  <Button 
+                    className="mt-4 gradient-primary glow-primary gap-2"
+                    onClick={() => setShowCreatePostDialog(true)}
+                  >
                     <Plus className="w-4 h-4" />
                     Create New Post
                   </Button>
@@ -159,7 +181,10 @@ export default function Dashboard() {
               Welcome back{dashboardData?.businessName ? `, ${dashboardData.businessName}` : ''}! Here's your content overview.
             </p>
           </div>
-          <Button className="gradient-primary glow-primary gap-2">
+          <Button 
+            className="gradient-primary glow-primary gap-2"
+            onClick={() => setShowCreatePostDialog(true)}
+          >
             <Plus className="w-4 h-4" />
             Create New Post
           </Button>
@@ -206,10 +231,13 @@ export default function Dashboard() {
             </div>
             <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
             <p className="text-muted-foreground mb-6">
-              Start by creating your first post or posting on your connected platforms.
+              Post content on <strong>{getMainPlatformName()}</strong> and it will automatically be repurposed to your connected platforms. Results will appear here.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button className="gradient-primary glow-primary gap-2">
+              <Button 
+                className="gradient-primary glow-primary gap-2"
+                onClick={() => setShowCreatePostDialog(true)}
+              >
                 <Plus className="w-4 h-4" />
                 Create New Post
               </Button>
@@ -220,6 +248,99 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      {/* Create New Post Dialog */}
+      <Dialog open={showCreatePostDialog} onOpenChange={setShowCreatePostDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="w-5 h-5 text-primary" />
+              How to Create a New Post
+            </DialogTitle>
+            <DialogDescription>
+              Here's how BMB Automations works with your content
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Step 1 */}
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                1
+              </div>
+              <div>
+                <h4 className="font-semibold mb-1">Upload to your source platform</h4>
+                <p className="text-sm text-muted-foreground">
+                  Post your video content on <strong>{getMainPlatformName()}</strong> as you normally would.
+                </p>
+              </div>
+            </div>
+
+            {/* Arrow */}
+            <div className="flex justify-center">
+              <ArrowRight className="w-5 h-5 text-muted-foreground rotate-90" />
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                2
+              </div>
+              <div>
+                <h4 className="font-semibold mb-1">Automatic repurposing triggers</h4>
+                <p className="text-sm text-muted-foreground">
+                  Our system detects your new post and automatically repurposes it to all your connected destination platforms.
+                </p>
+              </div>
+            </div>
+
+            {/* Arrow */}
+            <div className="flex justify-center">
+              <ArrowRight className="w-5 h-5 text-muted-foreground rotate-90" />
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-success text-success-foreground flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="font-semibold mb-1">View results here</h4>
+                <p className="text-sm text-muted-foreground">
+                  Once repurposed, your posts will appear on this dashboard. Track what's been published and where.
+                </p>
+              </div>
+            </div>
+
+            {/* Info Box */}
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">💡 Tip:</strong> Make sure your accounts are connected in Repurpose.io for the automation to work. If you're on our Done-For-You plan, we handle all of this for you!
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <Button 
+              className="w-full gradient-primary glow-primary gap-2"
+              onClick={() => {
+                window.open('https://my.repurpose.io', '_blank');
+                setShowCreatePostDialog(false);
+              }}
+            >
+              <ExternalLink className="w-4 h-4" />
+              Open Repurpose.io Dashboard
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => setShowCreatePostDialog(false)}
+            >
+              Got it
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
