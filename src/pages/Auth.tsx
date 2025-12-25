@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { z } from 'zod';
 
@@ -15,19 +15,35 @@ const authSchema = z.object({
 });
 
 export default function Auth() {
+  const [searchParams] = useSearchParams();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [validatingToken, setValidatingToken] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [intakeToken, setIntakeToken] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
+    const token = searchParams.get('token');
+    
+    if (token) {
+      // User came from intake form with token
+      validateIntakeToken(token);
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         // Check if user has completed onboarding
         setTimeout(async () => {
+          // If we have an intake token, link the account
+          if (intakeToken) {
+            await linkIntakeToUser(session.user.id, intakeToken);
+          }
+          
           const { data: profile } = await supabase
             .from('profiles')
             .select('onboarding_completed')
@@ -62,7 +78,62 @@ export default function Auth() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, intakeToken]);
+
+  const validateIntakeToken = async (token: string) => {
+    setValidatingToken(true);
+    try {
+      const { data, error } = await supabase
+        .from('video_requests')
+        .select('id, email, intake_completed, status')
+        .eq('intake_token', token)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        setTokenError('Invalid token. Please complete your intake form first.');
+        return;
+      }
+
+      if (data.status !== 'approved') {
+        setTokenError('Your beta request has not been approved yet.');
+        return;
+      }
+
+      if (!data.intake_completed) {
+        // Redirect back to intake form
+        navigate(`/intake?token=${token}`);
+        return;
+      }
+
+      // Token is valid and intake is completed
+      setIntakeToken(token);
+      setEmail(data.email);
+      setIsLogin(false); // Default to signup for new users
+    } catch (error) {
+      console.error('Error validating token:', error);
+      setTokenError('Something went wrong. Please try again.');
+    } finally {
+      setValidatingToken(false);
+    }
+  };
+
+  const linkIntakeToUser = async (userId: string, token: string) => {
+    try {
+      // Update video_request with user_id
+      const { error } = await supabase
+        .from('video_requests')
+        .update({ user_id: userId })
+        .eq('intake_token', token);
+
+      if (error) {
+        console.error('Error linking intake to user:', error);
+      }
+    } catch (error) {
+      console.error('Error linking intake to user:', error);
+    }
+  };
 
   const validateForm = () => {
     try {
@@ -119,6 +190,7 @@ export default function Auth() {
       let message = error.message;
       if (error.message.includes('User already registered')) {
         message = 'This email is already registered. Try signing in instead.';
+        setIsLogin(true);
       } else if (error.message.includes('Invalid login credentials')) {
         message = 'Invalid email or password. Please try again.';
       }
@@ -132,6 +204,42 @@ export default function Auth() {
     }
   };
 
+  // Loading state while validating token
+  if (validatingToken) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+            <p className="text-muted-foreground">Validating your access...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Token error state
+  if (tokenError) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="max-w-md text-center space-y-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 text-destructive mx-auto">
+              <AlertCircle className="h-8 w-8" />
+            </div>
+            <h1 className="text-2xl font-bold">Access Issue</h1>
+            <p className="text-muted-foreground">{tokenError}</p>
+            <Button onClick={() => navigate('/')} variant="outline">
+              Back to Home
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -143,8 +251,17 @@ export default function Auth() {
               Autopost<span className="text-primary">Agent</span>
             </h1>
             <p className="text-muted-foreground mt-2">
-              {isLogin ? 'Sign in to your account' : 'Create your account'}
+              {intakeToken 
+                ? 'Create your account to get started' 
+                : isLogin 
+                  ? 'Sign in to your account' 
+                  : 'Create your account'}
             </p>
+            {intakeToken && (
+              <p className="text-sm text-primary mt-1">
+                ✓ Intake form completed
+              </p>
+            )}
           </div>
 
         {/* Auth Card */}
@@ -161,11 +278,14 @@ export default function Auth() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
-                  disabled={loading}
+                  disabled={loading || !!intakeToken}
                 />
               </div>
               {errors.email && (
                 <p className="text-sm text-destructive">{errors.email}</p>
+              )}
+              {intakeToken && (
+                <p className="text-xs text-muted-foreground">Email is locked to your intake submission</p>
               )}
             </div>
 

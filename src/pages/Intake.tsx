@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import PlatformIntake, { type PlatformData, type PostTypes } from "@/components/intake/PlatformIntake";
 import Navigation from "@/components/Navigation";
-import { CheckCircle, ArrowLeft } from "lucide-react";
+import { CheckCircle, ArrowLeft, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
 type PlatformsState = Record<string, PlatformData>;
@@ -67,9 +67,14 @@ const createInitialPlatformsState = (): PlatformsState => {
 
 const Intake = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isValidating, setIsValidating] = useState(true);
+  const [isValidToken, setIsValidToken] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [requestData, setRequestData] = useState<{ id: string; name: string; email: string } | null>(null);
 
   // Form state
   const [fullName, setFullName] = useState("");
@@ -83,6 +88,60 @@ const Intake = () => {
 
   // Validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Validate token on mount
+  useEffect(() => {
+    const token = searchParams.get("token");
+    validateToken(token);
+  }, [searchParams]);
+
+  const validateToken = async (token: string | null) => {
+    if (!token) {
+      setTokenError("No intake token provided. Please use the link from your approval email.");
+      setIsValidating(false);
+      return;
+    }
+
+    try {
+      // Check if token exists and request is approved
+      const { data, error } = await supabase
+        .from("video_requests")
+        .select("id, name, email, status, intake_completed")
+        .eq("intake_token", token)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        setTokenError("Invalid intake token. Please use the link from your approval email.");
+        setIsValidating(false);
+        return;
+      }
+
+      if (data.status !== "approved") {
+        setTokenError("Your beta request hasn't been approved yet. Please wait for approval.");
+        setIsValidating(false);
+        return;
+      }
+
+      if (data.intake_completed) {
+        setTokenError("You've already completed the intake form. Please sign up or sign in to continue.");
+        setIsValidating(false);
+        return;
+      }
+
+      // Token is valid
+      setRequestData({ id: data.id, name: data.name, email: data.email });
+      setFullName(data.name);
+      setEmail(data.email);
+      setIsValidToken(true);
+    } catch (error: any) {
+      console.error("Error validating token:", error);
+      setTokenError("Something went wrong. Please try again later.");
+    } finally {
+      setIsValidating(false);
+    }
+  };
 
   const handlePlatformChange = (key: string, data: PlatformData) => {
     setPlatforms((prev) => ({ ...prev, [key]: data }));
@@ -112,7 +171,7 @@ const Intake = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validate()) {
+    if (!validate() || !requestData) {
       toast({
         title: "Please fix the errors",
         description: "Some required fields are missing or invalid.",
@@ -133,17 +192,30 @@ const Intake = () => {
       extra_notes: extraNotes.trim() || null,
       platforms: JSON.parse(JSON.stringify(platforms)) as Json,
     };
-    try {
-      const { error } = await supabase.from("intake_submissions").insert([formData]);
 
-      if (error) {
-        throw error;
+    try {
+      // Insert intake submission
+      const { error: intakeError } = await supabase.from("intake_submissions").insert([formData]);
+
+      if (intakeError) {
+        throw intakeError;
+      }
+
+      // Mark intake as completed on the video_request
+      const { error: updateError } = await supabase
+        .from("video_requests")
+        .update({ intake_completed: true })
+        .eq("id", requestData.id);
+
+      if (updateError) {
+        console.error("Error updating intake status:", updateError);
+        // Don't throw - intake was saved, just log the update error
       }
 
       setIsSubmitted(true);
       toast({
         title: "Intake submitted!",
-        description: "We've received your details and will follow up soon.",
+        description: "Now let's create your account to get started.",
       });
     } catch (error: any) {
       console.error("Error submitting intake:", error);
@@ -157,7 +229,56 @@ const Intake = () => {
     }
   };
 
+  // Loading state
+  if (isValidating) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center py-12">
+          <div className="text-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+            <p className="text-muted-foreground">Validating your intake link...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Error state
+  if (!isValidToken) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center py-12">
+          <div className="container max-w-md">
+            <div className="text-center space-y-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 text-destructive mx-auto">
+                <AlertCircle className="h-8 w-8" />
+              </div>
+              <h1 className="text-2xl font-bold">Unable to Access Intake Form</h1>
+              <p className="text-muted-foreground">{tokenError}</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button onClick={() => navigate("/")} variant="outline" className="gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Home
+                </Button>
+                {tokenError?.includes("already completed") && (
+                  <Button onClick={() => navigate("/auth")} className="gap-2">
+                    Sign In / Sign Up
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Success state - redirect to signup with token
   if (isSubmitted) {
+    const token = searchParams.get("token");
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navigation />
@@ -167,13 +288,13 @@ const Intake = () => {
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mx-auto">
                 <CheckCircle className="h-10 w-10" />
               </div>
-              <h1 className="text-3xl font-bold">Thanks!</h1>
+              <h1 className="text-3xl font-bold">Intake Complete!</h1>
               <p className="text-lg text-muted-foreground">
-                We've received your intake details. We'll review your platforms and follow up by email with next steps for your autopost workflow.
+                Great! Now let's create your account so you can start using the autopost workflow.
               </p>
-              <Button onClick={() => navigate("/")} variant="outline" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Home
+              <Button onClick={() => navigate(`/auth?token=${token}`)} size="lg" className="gap-2">
+                Create Your Account
+                <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -190,7 +311,7 @@ const Intake = () => {
           <div className="mb-8 animate-fade-in">
             <h1 className="text-3xl font-bold mb-2">Client Intake – Autopost Setup</h1>
             <p className="text-muted-foreground">
-              Answer a few questions so we can design the right autopost workflow for your brand.
+              Welcome {requestData?.name}! Answer a few questions so we can design the right autopost workflow for your brand.
             </p>
           </div>
 
@@ -223,10 +344,12 @@ const Intake = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className={errors.email ? "border-destructive" : ""}
+                    disabled
                   />
                   {errors.email && (
                     <p className="text-sm text-destructive">{errors.email}</p>
                   )}
+                  <p className="text-xs text-muted-foreground">Email is locked to your approved application</p>
                 </div>
               </div>
 
@@ -339,8 +462,18 @@ const Intake = () => {
 
             {/* Submit Button */}
             <div className="pt-4">
-              <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
-                {isSubmitting ? "Submitting..." : "Submit Intake"}
+              <Button type="submit" size="lg" className="w-full sm:w-auto gap-2" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    Submit & Continue to Signup
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
               </Button>
             </div>
           </form>
