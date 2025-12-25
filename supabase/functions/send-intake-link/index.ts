@@ -27,7 +27,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Get the site URL from environment or use a default
-    const siteUrl = Deno.env.get("SITE_URL") || "https://growyourbrand.lovable.app";
+    const siteUrl = Deno.env.get("SITE_URL") || "https://autopost-agent-cli.lovable.app";
     const intakeUrl = `${siteUrl}/intake?token=${intakeToken}`;
 
     console.log(`Sending intake link to ${email} with token ${intakeToken}`);
