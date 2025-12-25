@@ -145,7 +145,7 @@ export default function Dashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Welcome Banner */}
+        {/* Growth Tips Banner */}
         {showWelcomeBanner && (
           <div className="mb-8 p-6 rounded-2xl gradient-card border border-primary/30 shadow-soft animate-fade-in">
             <div className="flex items-start justify-between gap-4">
@@ -153,13 +153,27 @@ export default function Dashboard() {
                 <div className="p-3 rounded-xl bg-primary/20">
                   <Sparkles className="w-6 h-6 text-primary" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h2 className="text-xl font-bold flex items-center gap-2">
-                    🎉 Setup Complete
+                    🚀 Ready to Grow Your Brand
                   </h2>
-                  <p className="text-muted-foreground mt-1">
-                    Your workflows are live. Post on {getMainPlatformName()} and we'll automatically repurpose it everywhere.
+                  <p className="text-muted-foreground mt-1 mb-4">
+                    Your account is set up! Here are some tips to go viral:
                   </p>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span><strong>Post consistently</strong> — Aim for 3-5 posts per week across platforms</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span><strong>Hook in 3 seconds</strong> — Grab attention immediately with a bold statement or question</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                      <span><strong>Engage with comments</strong> — Reply within the first hour to boost algorithm visibility</span>
+                    </li>
+                  </ul>
                   <Button 
                     className="mt-4 gradient-primary glow-primary gap-2"
                     onClick={() => setShowCreatePostDialog(true)}
@@ -321,22 +335,12 @@ export default function Dashboard() {
             {/* Info Box */}
             <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
               <p className="text-sm text-muted-foreground">
-                <strong className="text-foreground">💡 Tip:</strong> Make sure your accounts are connected in Repurpose.io for the automation to work. If you're on our Done-For-You plan, we handle all of this for you!
+                <strong className="text-foreground">💡 Tip:</strong> If you're on our Done-For-You plan, we handle everything for you! Just focus on creating great content.
               </p>
             </div>
           </div>
 
           <div className="flex flex-col gap-3">
-            <Button 
-              className="w-full gradient-primary glow-primary gap-2"
-              onClick={() => {
-                window.open('https://my.repurpose.io', '_blank');
-                setShowCreatePostDialog(false);
-              }}
-            >
-              <ExternalLink className="w-4 h-4" />
-              Open Repurpose.io Dashboard
-            </Button>
             <Button 
               variant="outline" 
               className="w-full"
