@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, XCircle, Mail, Clock, User, Building, LogOut, Home } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Mail, Clock, User, Building, LogOut, Home, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Table,
@@ -197,6 +197,31 @@ const AdminBeta = () => {
       });
     } finally {
       setSendingEmail(null);
+    }
+  };
+
+  const handleDelete = async (request: BetaRequest) => {
+    try {
+      const { error } = await supabase
+        .from("video_requests")
+        .delete()
+        .eq("id", request.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Deleted",
+        description: `Request from ${request.name} has been deleted.`,
+      });
+
+      await fetchRequests();
+    } catch (error: any) {
+      console.error("Error deleting request:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete request.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -407,9 +432,55 @@ const AdminBeta = () => {
                               </div>
                             )}
                             {request.status === "approved" && (
-                              <span className="text-sm text-muted-foreground">
-                                Sent {request.approved_at ? new Date(request.approved_at).toLocaleDateString() : ""}
-                              </span>
+                              <div className="flex justify-end items-center gap-2">
+                                <span className="text-sm text-muted-foreground">
+                                  Sent {request.approved_at ? new Date(request.approved_at).toLocaleDateString() : ""}
+                                </span>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Request?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will permanently delete {request.name}'s request. This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDelete(request)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            )}
+                            {request.status === "rejected" && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Request?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This will permanently delete {request.name}'s request. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(request)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
                             )}
                           </TableCell>
                         </TableRow>
