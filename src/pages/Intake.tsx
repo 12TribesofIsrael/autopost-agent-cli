@@ -101,12 +101,20 @@ const Intake = () => {
 
   // Validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // State for account creation after intake
+  const [showAccountCreation, setShowAccountCreation] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [accountCreated, setAccountCreated] = useState(false);
 
-  // Validate token on mount
+  // Validate token on mount - but skip if we've already created an account
   useEffect(() => {
+    if (accountCreated) return; // Don't re-validate after account creation
     const token = searchParams.get("token");
     validateToken(token);
-  }, [searchParams]);
+  }, [searchParams, accountCreated]);
 
   const validateToken = async (token: string | null) => {
     if (!token) {
@@ -180,12 +188,6 @@ const Intake = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-  // State for account creation after intake
-  const [showAccountCreation, setShowAccountCreation] = useState(false);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -299,6 +301,9 @@ const Intake = () => {
           description: "Redirecting to your dashboard...",
         });
 
+        // Mark account as created to prevent re-validation loop
+        setAccountCreated(true);
+        
         // Navigate to onboarding
         navigate("/onboarding");
       }
