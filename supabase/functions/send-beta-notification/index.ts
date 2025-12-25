@@ -126,8 +126,8 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "GrowYourBrand <onboarding@resend.dev>",
-        to: ["delivered@resend.dev"], // Change this to your email once you verify domain
+        from: "GrowYourBrand <noreply@bornmadebosses.com>",
+        to: ["info@bornmadebosses.com"],
         subject: `🎉 New Beta Request from ${data.name}`,
         html: `
           <h1>New Beta Request!</h1>
@@ -161,7 +161,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "GrowYourBrand <onboarding@resend.dev>",
+        from: "GrowYourBrand <noreply@bornmadebosses.com>",
         to: [data.email],
         subject: "Welcome to GrowYourBrand Beta! 🎬",
         html: `

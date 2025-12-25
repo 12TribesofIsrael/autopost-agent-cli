@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "GrowYourBrand <onboarding@resend.dev>",
+        from: "GrowYourBrand <noreply@bornmadebosses.com>",
         to: [email],
         subject: "Update on your GrowYourBrand beta request",
         html: `
