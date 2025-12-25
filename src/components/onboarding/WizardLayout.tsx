@@ -5,6 +5,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import ProgressSteps, { type Step } from '@/components/ProgressSteps';
+
+const globalProgressSteps: Step[] = [
+  { label: "Intake", status: "completed" },
+  { label: "Account", status: "completed" },
+  { label: "Onboarding", status: "current" },
+  { label: "Dashboard", status: "upcoming" },
+];
 
 const stepLabels = [
   'Welcome',
@@ -54,17 +62,13 @@ export function WizardLayout({ children }: WizardLayoutProps) {
           {/* Left: Logo */}
           <Link to="/" className="flex items-center gap-2">
             <span className="text-xl font-bold tracking-tight">
-              Grow<span className="text-primary">YourBrand</span>
+              Autopost<span className="text-primary">Agent</span>
             </span>
           </Link>
 
-          {/* Center: Step Progress */}
-          <div className="hidden md:flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">
-              Step {currentStep + 1} of {totalSteps}
-            </span>
-            <span className="text-muted-foreground">•</span>
-            <span className="font-medium">{stepLabels[currentStep]}</span>
+          {/* Center: Global Progress */}
+          <div className="hidden md:block">
+            <ProgressSteps steps={globalProgressSteps} />
           </div>
 
           {/* Right: Navigation */}

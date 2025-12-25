@@ -15,8 +15,21 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import PlatformIntake, { type PlatformData, type PostTypes } from "@/components/intake/PlatformIntake";
 import Navigation from "@/components/Navigation";
+import ProgressSteps, { type Step } from "@/components/ProgressSteps";
 import { CheckCircle, ArrowLeft, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
+
+const getProgressSteps = (currentStep: "intake" | "account" | "onboarding" | "dashboard"): Step[] => {
+  const stepOrder = ["intake", "account", "onboarding", "dashboard"];
+  const currentIndex = stepOrder.indexOf(currentStep);
+  
+  return [
+    { label: "Intake", status: currentIndex > 0 ? "completed" : currentIndex === 0 ? "current" : "upcoming" },
+    { label: "Account", status: currentIndex > 1 ? "completed" : currentIndex === 1 ? "current" : "upcoming" },
+    { label: "Onboarding", status: currentIndex > 2 ? "completed" : currentIndex === 2 ? "current" : "upcoming" },
+    { label: "Dashboard", status: currentIndex === 3 ? "current" : "upcoming" },
+  ];
+};
 
 type PlatformsState = Record<string, PlatformData>;
 
@@ -360,6 +373,7 @@ const Intake = () => {
         <Navigation />
         <main className="flex-1 flex items-center justify-center py-12">
           <div className="container max-w-md">
+            <ProgressSteps steps={getProgressSteps("account")} className="mb-8" />
             <div className="text-center space-y-6 animate-fade-in">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mx-auto">
                 <CheckCircle className="h-10 w-10" />
@@ -467,6 +481,7 @@ const Intake = () => {
       <Navigation />
       <main className="flex-1 py-12">
         <div className="container max-w-3xl">
+          <ProgressSteps steps={getProgressSteps("intake")} className="mb-8" />
           <div className="mb-8 animate-fade-in">
             <h1 className="text-3xl font-bold mb-2">Client Intake – Autopost Setup</h1>
             <p className="text-muted-foreground">
