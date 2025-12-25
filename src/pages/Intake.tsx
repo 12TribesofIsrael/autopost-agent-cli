@@ -168,6 +168,12 @@ const Intake = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // State for account creation after intake
+  const [showAccountCreation, setShowAccountCreation] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -209,13 +215,13 @@ const Intake = () => {
 
       if (updateError) {
         console.error("Error updating intake status:", updateError);
-        // Don't throw - intake was saved, just log the update error
       }
 
-      setIsSubmitted(true);
+      // Show account creation step instead of redirecting
+      setShowAccountCreation(true);
       toast({
         title: "Intake submitted!",
-        description: "Now let's create your account to get started.",
+        description: "Now create your password to finish setting up your account.",
       });
     } catch (error: any) {
       console.error("Error submitting intake:", error);
@@ -226,6 +232,77 @@ const Intake = () => {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (password.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure your passwords match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreatingAccount(true);
+
+    try {
+      const token = searchParams.get("token");
+      
+      // Sign up the user
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
+
+      if (signUpError) throw signUpError;
+
+      if (authData.user) {
+        // Link the video request to the user
+        if (token) {
+          await supabase
+            .from("video_requests")
+            .update({ user_id: authData.user.id })
+            .eq("intake_token", token);
+        }
+
+        toast({
+          title: "Account created!",
+          description: "Redirecting to your dashboard...",
+        });
+
+        // Navigate to onboarding
+        navigate("/onboarding");
+      }
+    } catch (error: any) {
+      console.error("Error creating account:", error);
+      let message = error.message;
+      if (error.message.includes("User already registered")) {
+        message = "This email is already registered. Please sign in instead.";
+        navigate(`/auth?token=${searchParams.get("token")}`);
+      }
+      toast({
+        title: "Account creation failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingAccount(false);
     }
   };
 
@@ -276,7 +353,89 @@ const Intake = () => {
     );
   }
 
-  // Success state - redirect to signup with token
+  // Account creation step after intake submission
+  if (showAccountCreation) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center py-12">
+          <div className="container max-w-md">
+            <div className="text-center space-y-6 animate-fade-in">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mx-auto">
+                <CheckCircle className="h-10 w-10" />
+              </div>
+              <h1 className="text-3xl font-bold">Intake Complete!</h1>
+              <p className="text-muted-foreground">
+                Create a password to finish setting up your account.
+              </p>
+              
+              <form onSubmit={handleCreateAccount} className="space-y-4 text-left mt-8">
+                <div className="space-y-2">
+                  <Label htmlFor="email-display">Email</Label>
+                  <Input
+                    id="email-display"
+                    type="email"
+                    value={email}
+                    disabled
+                    className="bg-muted"
+                  />
+                  <p className="text-xs text-muted-foreground">This is the email from your intake form</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Create Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="At least 6 characters"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isCreatingAccount}
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={isCreatingAccount}
+                    required
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full gap-2"
+                  disabled={isCreatingAccount}
+                >
+                  {isCreatingAccount ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating Account...
+                    </>
+                  ) : (
+                    <>
+                      Create Account & Continue
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Old success state - no longer used but keeping for reference
   if (isSubmitted) {
     const token = searchParams.get("token");
     return (
