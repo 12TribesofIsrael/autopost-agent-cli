@@ -160,18 +160,31 @@ const AdminBeta = () => {
     }
   };
 
-  const handleReject = async (requestId: string) => {
+  const handleReject = async (request: BetaRequest) => {
+    setSendingEmail(request.id);
+    
     try {
-      const { error } = await supabase
+      // Update status to rejected
+      const { error: updateError } = await supabase
         .from("video_requests")
         .update({ status: "rejected" })
-        .eq("id", requestId);
+        .eq("id", request.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Send denial email
+      const { error: emailError } = await supabase.functions.invoke("send-denial-email", {
+        body: {
+          email: request.email,
+          name: request.name,
+        },
+      });
+
+      if (emailError) throw emailError;
 
       toast({
         title: "Rejected",
-        description: "Beta request has been rejected.",
+        description: `Denial email sent to ${request.email}`,
       });
 
       await fetchRequests();
@@ -179,9 +192,11 @@ const AdminBeta = () => {
       console.error("Error rejecting request:", error);
       toast({
         title: "Error",
-        description: "Failed to reject request.",
+        description: error.message || "Failed to reject and send email.",
         variant: "destructive",
       });
+    } finally {
+      setSendingEmail(null);
     }
   };
 
@@ -370,7 +385,7 @@ const AdminBeta = () => {
                                 </Button>
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                    <Button size="sm" variant="outline">
+                                    <Button size="sm" variant="outline" disabled={sendingEmail === request.id}>
                                       <XCircle className="h-4 w-4" />
                                     </Button>
                                   </AlertDialogTrigger>
@@ -378,13 +393,13 @@ const AdminBeta = () => {
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>Reject Request?</AlertDialogTitle>
                                       <AlertDialogDescription>
-                                        This will reject {request.name}'s beta request. They won't be notified.
+                                        This will reject {request.name}'s beta request and send them a denial email.
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => handleReject(request.id)}>
-                                        Reject
+                                      <AlertDialogAction onClick={() => handleReject(request)}>
+                                        Reject & Send Email
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
