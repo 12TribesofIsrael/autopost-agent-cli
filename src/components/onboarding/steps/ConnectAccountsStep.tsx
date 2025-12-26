@@ -1,10 +1,14 @@
 import { useOnboarding } from '@/contexts/OnboardingContext';
 import { WizardNavigation } from '../WizardNavigation';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Lock, Instagram, Youtube, Facebook, Twitter, Podcast, HardDrive, Cloud } from 'lucide-react';
-import { useState } from 'react';
+import { Lock, Instagram, Youtube, Facebook, Twitter, Podcast, HardDrive, Cloud, Eye, EyeOff, Check, ChevronDown, ChevronUp, Shield } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Platform {
   id: string;
@@ -12,6 +16,13 @@ interface Platform {
   description: string;
   icon: React.ReactNode;
   brandColor: string;
+}
+
+interface CredentialForm {
+  username: string;
+  password: string;
+  twoFactorBackup: string;
+  notes: string;
 }
 
 // TikTok icon component
@@ -49,192 +60,250 @@ const LinkedInIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Source platforms - where content originates from
-const sourcePlatforms: Platform[] = [
+// All platforms combined (source + destination)
+const allPlatforms: Platform[] = [
   {
     id: 'tiktok',
     name: 'TikTok',
-    description: 'Repurpose your TikTok videos automatically.',
+    description: 'Your TikTok account credentials',
     icon: <TikTokIcon className="w-6 h-6" />,
     brandColor: '#000000',
   },
   {
     id: 'instagram',
     name: 'Instagram',
-    description: 'Repurpose your Instagram Reels.',
+    description: 'Your Instagram account credentials',
     icon: <Instagram className="w-6 h-6" />,
     brandColor: '#E4405F',
   },
   {
     id: 'youtube',
     name: 'YouTube',
-    description: 'Repurpose your YouTube videos and Shorts.',
+    description: 'Your YouTube/Google account credentials',
     icon: <Youtube className="w-6 h-6" />,
     brandColor: '#FF0000',
   },
   {
     id: 'facebook',
     name: 'Facebook',
-    description: 'Repurpose your Facebook Reels.',
+    description: 'Your Facebook account credentials',
     icon: <Facebook className="w-6 h-6" />,
     brandColor: '#1877F2',
   },
   {
-    id: 'twitch',
-    name: 'Twitch',
-    description: 'Repurpose clips from your Twitch streams.',
-    icon: <TwitchIcon className="w-6 h-6" />,
-    brandColor: '#9146FF',
+    id: 'twitter',
+    name: 'X (Twitter)',
+    description: 'Your X/Twitter account credentials',
+    icon: <Twitter className="w-6 h-6" />,
+    brandColor: '#000000',
   },
   {
     id: 'snapchat',
     name: 'Snapchat',
-    description: 'Repurpose your Snapchat Stories.',
-    icon: <SnapchatIcon className="w-6 h-6" />,
-    brandColor: '#FFFC00',
-  },
-  {
-    id: 'podcast',
-    name: 'Podcast (RSS)',
-    description: 'Repurpose audio clips from your podcast.',
-    icon: <Podcast className="w-6 h-6" />,
-    brandColor: '#8B5CF6',
-  },
-  {
-    id: 'googledrive',
-    name: 'Google Drive',
-    description: 'Repurpose videos from your Drive.',
-    icon: <HardDrive className="w-6 h-6" />,
-    brandColor: '#4285F4',
-  },
-  {
-    id: 'dropbox',
-    name: 'Dropbox',
-    description: 'Repurpose videos from Dropbox.',
-    icon: <Cloud className="w-6 h-6" />,
-    brandColor: '#0061FF',
-  },
-];
-
-// Destination platforms - where content gets published to
-const destinationPlatforms: Platform[] = [
-  {
-    id: 'youtube_dest',
-    name: 'YouTube Shorts',
-    description: 'Publish to YouTube Shorts.',
-    icon: <Youtube className="w-6 h-6" />,
-    brandColor: '#FF0000',
-  },
-  {
-    id: 'tiktok_dest',
-    name: 'TikTok',
-    description: 'Publish to TikTok.',
-    icon: <TikTokIcon className="w-6 h-6" />,
-    brandColor: '#000000',
-  },
-  {
-    id: 'instagram_dest',
-    name: 'Instagram Reels',
-    description: 'Publish to Instagram Reels.',
-    icon: <Instagram className="w-6 h-6" />,
-    brandColor: '#E4405F',
-  },
-  {
-    id: 'facebook_dest',
-    name: 'Facebook Reels',
-    description: 'Publish to Facebook Reels.',
-    icon: <Facebook className="w-6 h-6" />,
-    brandColor: '#1877F2',
-  },
-  {
-    id: 'snapchat_dest',
-    name: 'Snapchat Spotlight',
-    description: 'Publish to Snapchat Spotlight.',
+    description: 'Your Snapchat account credentials',
     icon: <SnapchatIcon className="w-6 h-6" />,
     brandColor: '#FFFC00',
   },
   {
     id: 'pinterest',
     name: 'Pinterest',
-    description: 'Publish video pins to Pinterest.',
+    description: 'Your Pinterest account credentials',
     icon: <PinterestIcon className="w-6 h-6" />,
     brandColor: '#E60023',
   },
   {
-    id: 'twitter',
-    name: 'X (Twitter)',
-    description: 'Share video clips to X.',
-    icon: <Twitter className="w-6 h-6" />,
-    brandColor: '#000000',
-  },
-  {
     id: 'linkedin',
     name: 'LinkedIn',
-    description: 'Share professional content to LinkedIn.',
+    description: 'Your LinkedIn account credentials',
     icon: <LinkedInIcon className="w-6 h-6" />,
     brandColor: '#0A66C2',
+  },
+  {
+    id: 'twitch',
+    name: 'Twitch',
+    description: 'Your Twitch account credentials',
+    icon: <TwitchIcon className="w-6 h-6" />,
+    brandColor: '#9146FF',
+  },
+  {
+    id: 'podcast',
+    name: 'Podcast (RSS)',
+    description: 'Your podcast platform credentials',
+    icon: <Podcast className="w-6 h-6" />,
+    brandColor: '#8B5CF6',
+  },
+  {
+    id: 'googledrive',
+    name: 'Google Drive',
+    description: 'Your Google account credentials',
+    icon: <HardDrive className="w-6 h-6" />,
+    brandColor: '#4285F4',
+  },
+  {
+    id: 'dropbox',
+    name: 'Dropbox',
+    description: 'Your Dropbox account credentials',
+    icon: <Cloud className="w-6 h-6" />,
+    brandColor: '#0061FF',
   },
 ];
 
 export function ConnectAccountsStep() {
-  const { data, updateData, setCurrentStep } = useOnboarding();
+  const { setCurrentStep } = useOnboarding();
   const { toast } = useToast();
-  const [connecting, setConnecting] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [expandedPlatform, setExpandedPlatform] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
+  const [saving, setSaving] = useState<string | null>(null);
+  const [savedPlatforms, setSavedPlatforms] = useState<Set<string>>(new Set());
+  const [forms, setForms] = useState<Record<string, CredentialForm>>({});
 
-  const handleConnect = async (platformId: string) => {
-    setConnecting(platformId);
-    
-    // Simulate OAuth flow
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const mockHandles: Record<string, string> = {
-      tiktok: '@yourbrand_tiktok',
-      instagram: '@yourbrand',
-      youtube: 'Your Brand Channel',
-      facebook: 'Your Brand Page',
-      twitch: 'yourbrand_tv',
-      snapchat: '@yourbrand_snap',
-      podcast: 'Your Podcast Feed',
-      googledrive: 'Connected',
-      dropbox: 'Connected',
-      youtube_dest: 'Your Brand Channel',
-      tiktok_dest: '@yourbrand_tiktok',
-      instagram_dest: '@yourbrand',
-      facebook_dest: 'Your Brand Page',
-      snapchat_dest: '@yourbrand_snap',
-      pinterest: '@yourbrand_pins',
-      twitter: '@yourbrand_x',
-      linkedin: 'Your Brand',
+  // Load existing credentials on mount
+  useEffect(() => {
+    if (!user) return;
+
+    const loadCredentials = async () => {
+      const { data: credentials } = await supabase
+        .from('platform_credentials')
+        .select('platform, username, two_factor_backup, notes')
+        .eq('user_id', user.id);
+
+      if (credentials) {
+        const saved = new Set<string>();
+        const loadedForms: Record<string, CredentialForm> = {};
+        
+        credentials.forEach(cred => {
+          saved.add(cred.platform);
+          loadedForms[cred.platform] = {
+            username: cred.username,
+            password: '••••••••', // Don't show actual password
+            twoFactorBackup: cred.two_factor_backup || '',
+            notes: cred.notes || '',
+          };
+        });
+        
+        setSavedPlatforms(saved);
+        setForms(loadedForms);
+      }
     };
 
-    updateData({
-      connectedAccounts: {
-        ...data.connectedAccounts,
-        [platformId]: { connected: true, handle: mockHandles[platformId] || 'Connected' },
-      },
-    });
+    loadCredentials();
+  }, [user]);
 
-    setConnecting(null);
-    toast({
-      title: 'Account connected!',
-      description: `Successfully connected.`,
-    });
+  const getForm = (platformId: string): CredentialForm => {
+    return forms[platformId] || { username: '', password: '', twoFactorBackup: '', notes: '' };
   };
 
-  const handleDisconnect = (platformId: string) => {
-    updateData({
-      connectedAccounts: {
-        ...data.connectedAccounts,
-        [platformId]: { connected: false, handle: '' },
+  const updateForm = (platformId: string, field: keyof CredentialForm, value: string) => {
+    setForms(prev => ({
+      ...prev,
+      [platformId]: {
+        ...getForm(platformId),
+        [field]: value,
       },
-    });
-    toast({
-      title: 'Account disconnected',
-      description: `Account has been disconnected.`,
-    });
+    }));
   };
 
-  const hasAtLeastOneConnection = Object.values(data.connectedAccounts).some(acc => acc.connected);
+  const handleSaveCredentials = async (platformId: string) => {
+    if (!user) return;
+
+    const form = getForm(platformId);
+    
+    if (!form.username.trim() || !form.password.trim()) {
+      toast({
+        title: 'Missing information',
+        description: 'Please enter both username and password.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Don't save if password is masked placeholder
+    if (form.password === '••••••••') {
+      toast({
+        title: 'Password required',
+        description: 'Please enter your password to update credentials.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSaving(platformId);
+
+    try {
+      const { error } = await supabase
+        .from('platform_credentials')
+        .upsert({
+          user_id: user.id,
+          platform: platformId,
+          username: form.username.trim(),
+          password: form.password,
+          two_factor_backup: form.twoFactorBackup.trim() || null,
+          notes: form.notes.trim() || null,
+        }, { onConflict: 'user_id,platform' });
+
+      if (error) throw error;
+
+      setSavedPlatforms(prev => new Set([...prev, platformId]));
+      setExpandedPlatform(null);
+      
+      // Mask the password after saving
+      setForms(prev => ({
+        ...prev,
+        [platformId]: {
+          ...form,
+          password: '••••••••',
+        },
+      }));
+
+      toast({
+        title: 'Credentials saved!',
+        description: 'Your team will set up this account for you.',
+      });
+    } catch (error) {
+      console.error('Error saving credentials:', error);
+      toast({
+        title: 'Error saving',
+        description: 'Could not save credentials. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleRemoveCredentials = async (platformId: string) => {
+    if (!user) return;
+
+    try {
+      await supabase
+        .from('platform_credentials')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('platform', platformId);
+
+      setSavedPlatforms(prev => {
+        const next = new Set(prev);
+        next.delete(platformId);
+        return next;
+      });
+
+      setForms(prev => {
+        const next = { ...prev };
+        delete next[platformId];
+        return next;
+      });
+
+      toast({
+        title: 'Credentials removed',
+        description: 'Account credentials have been deleted.',
+      });
+    } catch (error) {
+      console.error('Error removing credentials:', error);
+    }
+  };
+
+  const hasAtLeastOneCredential = savedPlatforms.size > 0;
 
   const handleContinue = () => {
     setCurrentStep(3);
@@ -245,71 +314,154 @@ export function ConnectAccountsStep() {
   };
 
   const renderPlatformCard = (platform: Platform) => {
-    const account = data.connectedAccounts[platform.id as keyof typeof data.connectedAccounts];
-    const isConnected = account?.connected;
-    const isConnecting = connecting === platform.id;
+    const isSaved = savedPlatforms.has(platform.id);
+    const isExpanded = expandedPlatform === platform.id;
+    const form = getForm(platform.id);
+    const isSaving = saving === platform.id;
 
     return (
       <div
         key={platform.id}
-        className={`p-4 rounded-xl border transition-all ${
-          isConnected
+        className={`rounded-xl border transition-all overflow-hidden ${
+          isSaved
             ? 'border-success/30 bg-success/5'
-            : 'border-border/50 bg-card hover:border-border'
+            : 'border-border/50 bg-card'
         }`}
       >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div 
-              className="p-2 rounded-lg"
-              style={{ 
-                backgroundColor: isConnected ? `${platform.brandColor}20` : 'hsl(var(--muted))',
-                color: isConnected ? platform.brandColor : 'hsl(var(--muted-foreground))'
-              }}
-            >
-              {platform.icon}
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-semibold text-sm">{platform.name}</h3>
-                {isConnected && (
-                  <Badge className="bg-success text-success-foreground text-xs">
-                    {account.handle}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground truncate">
-                {platform.description}
-              </p>
-            </div>
-          </div>
-
-          <div className="shrink-0">
-            {isConnected ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDisconnect(platform.id)}
-                className="text-destructive hover:text-destructive text-xs"
-              >
-                Disconnect
-              </Button>
-            ) : (
-              <Button
-                onClick={() => handleConnect(platform.id)}
-                disabled={isConnecting}
-                size="sm"
+        {/* Header */}
+        <div 
+          className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => setExpandedPlatform(isExpanded ? null : platform.id)}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div 
+                className="p-2 rounded-lg"
                 style={{ 
-                  backgroundColor: platform.brandColor,
-                  color: platform.brandColor === '#FFFC00' || platform.brandColor === '#FFFC00' ? '#000' : '#fff'
+                  backgroundColor: isSaved ? `${platform.brandColor}20` : 'hsl(var(--muted))',
+                  color: isSaved ? platform.brandColor : 'hsl(var(--muted-foreground))'
                 }}
-                className="hover:opacity-90"
               >
-                {isConnecting ? '...' : 'Connect'}
-              </Button>
-            )}
+                {platform.icon}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-semibold text-sm">{platform.name}</h3>
+                  {isSaved && (
+                    <Badge className="bg-success text-success-foreground text-xs gap-1">
+                      <Check className="w-3 h-3" />
+                      Submitted
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {isSaved ? `@${form.username}` : 'Click to add credentials'}
+                </p>
+              </div>
+            </div>
+
+            <div className="shrink-0">
+              {isExpanded ? (
+                <ChevronUp className="w-5 h-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Expanded Form */}
+        {isExpanded && (
+          <div className="px-4 pb-4 pt-2 border-t border-border/50 space-y-3">
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">
+                Username / Email / Handle
+              </label>
+              <Input
+                placeholder="Enter your username or email"
+                value={form.username}
+                onChange={(e) => updateForm(platform.id, 'username', e.target.value)}
+                className="h-9 text-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">
+                Password
+              </label>
+              <div className="relative">
+                <Input
+                  type={showPassword[platform.id] ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={form.password}
+                  onChange={(e) => updateForm(platform.id, 'password', e.target.value)}
+                  onFocus={() => {
+                    if (form.password === '••••••••') {
+                      updateForm(platform.id, 'password', '');
+                    }
+                  }}
+                  className="h-9 text-sm pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(prev => ({ ...prev, [platform.id]: !prev[platform.id] }))}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword[platform.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">
+                2FA Backup Codes <span className="text-muted-foreground/60">(optional)</span>
+              </label>
+              <Textarea
+                placeholder="If you have 2FA enabled, paste backup codes here"
+                value={form.twoFactorBackup}
+                onChange={(e) => updateForm(platform.id, 'twoFactorBackup', e.target.value)}
+                className="text-sm min-h-[60px] resize-none"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">
+                Notes <span className="text-muted-foreground/60">(optional)</span>
+              </label>
+              <Input
+                placeholder="Any additional login info or instructions"
+                value={form.notes}
+                onChange={(e) => updateForm(platform.id, 'notes', e.target.value)}
+                className="h-9 text-sm"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <Button
+                onClick={() => handleSaveCredentials(platform.id)}
+                disabled={isSaving}
+                size="sm"
+                className="flex-1"
+                style={{ 
+                  backgroundColor: platform.brandColor,
+                  color: platform.brandColor === '#FFFC00' ? '#000' : '#fff'
+                }}
+              >
+                {isSaving ? 'Saving...' : isSaved ? 'Update' : 'Save Credentials'}
+              </Button>
+              {isSaved && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemoveCredentials(platform.id)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  Remove
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -318,53 +470,53 @@ export function ConnectAccountsStep() {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-2xl md:text-3xl font-bold">Connect Your Accounts</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">Provide Account Access</h1>
         <p className="text-muted-foreground">
-          Connect your source platforms (where you post) and destination platforms (where we'll repurpose to).
+          Share your account credentials so our team can connect your platforms and set up your automated workflows.
         </p>
       </div>
 
       {/* Security Banner */}
       <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
-        <Lock className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-        <p className="text-sm text-muted-foreground">
-          <strong className="text-foreground">Secure:</strong> We use official OAuth—your passwords are never stored.
+        <Shield className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+        <div className="text-sm">
+          <strong className="text-foreground">Your credentials are secure:</strong>
+          <ul className="text-muted-foreground mt-1 space-y-1">
+            <li>• Stored with encryption and only accessible by our setup team</li>
+            <li>• Used solely to connect your accounts on your behalf</li>
+            <li>• You can remove credentials at any time</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Done-For-You Notice */}
+      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
+        <p className="text-xs text-amber-600 dark:text-amber-400">
+          <strong>Done-For-You Service:</strong> Our team will log in and connect these accounts for you. 
+          Account creation is a paid add-on if you don't have accounts yet.
         </p>
       </div>
 
-      {/* Source Platforms */}
+      {/* Platform List */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <div className="h-px flex-1 bg-border" />
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Source Platforms</span>
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Your Platforms</span>
           <div className="h-px flex-1 bg-border" />
         </div>
-        <p className="text-xs text-muted-foreground text-center">Where your original content lives</p>
-        <div className="grid gap-3">
-          {sourcePlatforms.map(renderPlatformCard)}
-        </div>
-      </div>
-
-      {/* Destination Platforms */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Destination Platforms</span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
-        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
-          <p className="text-xs text-amber-600 dark:text-amber-400">
-            <strong>Note:</strong> You must have these accounts already created, or we can create them for you as part of our Done-For-You service.
-          </p>
-        </div>
-        <div className="grid gap-3">
-          {destinationPlatforms.map(renderPlatformCard)}
+        <p className="text-xs text-muted-foreground text-center">
+          Add credentials for each platform you want connected
+        </p>
+        <div className="grid gap-2">
+          {allPlatforms.map(renderPlatformCard)}
         </div>
       </div>
 
       {/* Helper Text */}
       <p className="text-xs text-muted-foreground text-center">
-        Connect at least one source and one destination to set up your workflow.
+        {hasAtLeastOneCredential 
+          ? `${savedPlatforms.size} platform${savedPlatforms.size > 1 ? 's' : ''} ready for setup`
+          : 'Add at least one platform to continue'}
       </p>
 
       <WizardNavigation
@@ -372,7 +524,7 @@ export function ConnectAccountsStep() {
         continueLabel="Continue to Workflows"
         showSkip
         onSkip={handleSkip}
-        disableContinue={!hasAtLeastOneConnection}
+        disableContinue={!hasAtLeastOneCredential}
       />
     </div>
   );
