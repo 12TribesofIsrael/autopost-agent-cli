@@ -256,6 +256,15 @@ export function ConnectAccountsStep() {
         },
       }));
 
+      // Send notification email to team (fire and forget)
+      supabase.functions.invoke('send-credentials-notification', {
+        body: {
+          platform: platformId,
+          username: form.username.trim(),
+          userEmail: user.email,
+        },
+      }).catch(err => console.error('Failed to send notification:', err));
+
       toast({
         title: 'Credentials saved!',
         description: 'Your team will set up this account for you.',
