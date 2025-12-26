@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.send-denial-email]
 verify_jwt = false
+
+[functions.send-credentials-notification]
+verify_jwt = false
