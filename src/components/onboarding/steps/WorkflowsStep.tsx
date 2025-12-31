@@ -8,6 +8,7 @@ import { Instagram, Youtube, Facebook, Twitter, Podcast, HardDrive, Cloud } from
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 // Source platforms - where content originates (based on Repurpose.io)
 const sourcePlatforms = {
@@ -121,6 +122,7 @@ export function WorkflowsStep() {
   const { user } = useAuth();
   const [savedPlatforms, setSavedPlatforms] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   // Load platforms that have credentials saved
   useEffect(() => {
@@ -160,15 +162,74 @@ export function WorkflowsStep() {
     updateData({ destinations: newDests });
   };
 
-  const handleContinue = () => {
-    setCurrentStep(4);
+  const handleContinue = async () => {
+    if (!user || !data.mainSourcePlatform) return;
+    
+    setSaving(true);
+    try {
+      // Save workflows to database
+      for (const dest of data.destinations) {
+        await supabase.from('workflows').upsert({
+          user_id: user.id,
+          source_platform: data.mainSourcePlatform,
+          destination_platform: dest,
+          enabled: true,
+        }, {
+          onConflict: 'user_id,source_platform,destination_platform'
+        });
+      }
+
+      // Send email notification
+      await supabase.functions.invoke('send-workflow-notification', {
+        body: {
+          userEmail: user.email,
+          sourcePlatform: data.mainSourcePlatform,
+          destinations: data.destinations,
+          frequency: data.frequency,
+          skippedSetup: false,
+        },
+      });
+
+      toast.success('Workflow saved! Our team will set this up for you.');
+      setCurrentStep(4);
+    } catch (error) {
+      console.error('Error saving workflow:', error);
+      toast.error('Failed to save workflow. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const hasValidWorkflow = data.mainSourcePlatform && data.destinations.length > 0;
 
   // For "Done for you" - allow skipping workflow setup entirely
-  const handleSkipWorkflow = () => {
-    setCurrentStep(4);
+  const handleSkipWorkflow = async () => {
+    if (!user) {
+      setCurrentStep(4);
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      // Send email notification that user skipped
+      await supabase.functions.invoke('send-workflow-notification', {
+        body: {
+          userEmail: user.email,
+          sourcePlatform: '',
+          destinations: [],
+          frequency: data.frequency,
+          skippedSetup: true,
+        },
+      });
+
+      toast.success('Got it! Our team will reach out to set up your workflow.');
+      setCurrentStep(4);
+    } catch (error) {
+      console.error('Error sending skip notification:', error);
+      setCurrentStep(4);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -240,9 +301,10 @@ export function WorkflowsStep() {
             </div>
             <button
               onClick={handleSkipWorkflow}
-              className="w-full py-3 px-4 rounded-xl border border-primary/50 text-primary hover:bg-primary/10 transition-colors text-sm font-medium"
+              disabled={saving}
+              className="w-full py-3 px-4 rounded-xl border border-primary/50 text-primary hover:bg-primary/10 transition-colors text-sm font-medium disabled:opacity-50"
             >
-              Skip — Let the team set this up for me
+              {saving ? "Saving..." : "Skip — Let the team set this up for me"}
             </button>
           </div>
         )}
@@ -317,8 +379,8 @@ export function WorkflowsStep() {
 
       <WizardNavigation
         onContinue={handleContinue}
-        continueLabel="Continue"
-        disableContinue={!hasValidWorkflow}
+        continueLabel={saving ? "Saving..." : "Continue"}
+        disableContinue={!hasValidWorkflow || saving}
       />
     </div>
   );
