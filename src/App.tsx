@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Intake from "./pages/Intake";
 import AdminBeta from "./pages/AdminBeta";
 import AdminCredentials from "./pages/AdminCredentials";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/intake" element={<Intake />} />
           <Route path="/admin/beta" element={<AdminBeta />} />
           <Route path="/admin/credentials" element={<AdminCredentials />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
