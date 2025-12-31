@@ -5,6 +5,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { Instagram, Youtube, Facebook, Twitter, Podcast, HardDrive, Cloud } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 // Source platforms - where content originates (based on Repurpose.io)
 const sourcePlatforms = {
@@ -115,14 +118,32 @@ const frequencies = [
 
 export function WorkflowsStep() {
   const { data, updateData, setCurrentStep } = useOnboarding();
+  const { user } = useAuth();
+  const [savedPlatforms, setSavedPlatforms] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Get connected platforms from onboarding
-  const connectedPlatforms = Object.entries(data.connectedAccounts)
-    .filter(([_, acc]) => acc.connected)
-    .map(([id]) => id);
+  // Load platforms that have credentials saved
+  useEffect(() => {
+    if (!user) return;
 
-  // Available sources are the connected platforms that exist in sourcePlatforms
-  const availableSources = connectedPlatforms.filter(p => p in sourcePlatforms);
+    const loadCredentials = async () => {
+      setLoading(true);
+      const { data: credentials } = await supabase
+        .from('platform_credentials')
+        .select('platform')
+        .eq('user_id', user.id);
+
+      if (credentials) {
+        setSavedPlatforms(credentials.map(c => c.platform));
+      }
+      setLoading(false);
+    };
+
+    loadCredentials();
+  }, [user]);
+
+  // Available sources are platforms with saved credentials that exist in sourcePlatforms
+  const availableSources = savedPlatforms.filter(p => p in sourcePlatforms);
 
   // Generate destination options based on source (exclude the source from destinations)
   const getDestinations = () => {
@@ -144,6 +165,22 @@ export function WorkflowsStep() {
   };
 
   const hasValidWorkflow = data.mainSourcePlatform && data.destinations.length > 0;
+
+  // For "Done for you" - allow skipping workflow setup entirely
+  const handleSkipWorkflow = () => {
+    setCurrentStep(4);
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-8 animate-fade-in">
+        <div className="space-y-2">
+          <h1 className="text-2xl md:text-3xl font-bold">Set Up Your Repurposing Workflow</h1>
+          <p className="text-muted-foreground">Loading your connected platforms...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -192,9 +229,22 @@ export function WorkflowsStep() {
             })}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-xl">
-            No source platforms connected. Go back to connect your accounts first.
-          </p>
+          <div className="space-y-4">
+            <div className="text-center py-6 border border-dashed rounded-xl bg-muted/20">
+              <p className="text-sm text-muted-foreground mb-2">
+                No source platform credentials provided yet.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                You can go back to add accounts, or skip this step if you'd like us to set up your workflow for you.
+              </p>
+            </div>
+            <button
+              onClick={handleSkipWorkflow}
+              className="w-full py-3 px-4 rounded-xl border border-primary/50 text-primary hover:bg-primary/10 transition-colors text-sm font-medium"
+            >
+              Skip — Let the team set this up for me
+            </button>
+          </div>
         )}
       </div>
 
