@@ -481,40 +481,41 @@ export function ConnectAccountsStep() {
       <div className="space-y-2">
         <h1 className="text-2xl md:text-3xl font-bold">Provide Account Access</h1>
         <p className="text-muted-foreground">
-          Share your account credentials so our team can connect your platforms and set up your automated workflows.
+          Share login credentials for the accounts you <strong>already have</strong>. We'll connect them to our automation system for you.
         </p>
+      </div>
+
+      {/* Important Note Banner */}
+      <div className="flex items-start gap-3 p-4 bg-accent/10 border border-accent/30 rounded-xl">
+        <Shield className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+        <div className="text-sm">
+          <p className="font-medium">Only add accounts you already have</p>
+          <p className="text-muted-foreground mt-1">
+            Skip any platforms where you don't have an account. If you want us to create new accounts for you, just let us know separately — no need to fill anything here for those.
+          </p>
+        </div>
       </div>
 
       {/* Security Banner */}
       <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/5 border border-primary/20">
-        <Shield className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+        <Lock className="w-5 h-5 text-primary mt-0.5 shrink-0" />
         <div className="text-sm">
-          <strong className="text-foreground">Your credentials are secure:</strong>
-          <ul className="text-muted-foreground mt-1 space-y-1">
-            <li>• Stored with encryption and only accessible by our setup team</li>
-            <li>• Used solely to connect your accounts on your behalf</li>
-            <li>• You can remove credentials at any time</li>
-          </ul>
+          <p className="font-medium text-primary">Your credentials are secure</p>
+          <p className="text-muted-foreground mt-1">
+            Stored with encryption and only accessible by our setup team. You can remove credentials at any time.
+          </p>
         </div>
-      </div>
-
-      {/* Done-For-You Notice */}
-      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-center">
-        <p className="text-xs text-amber-600 dark:text-amber-400">
-          <strong>Done-For-You Service:</strong> Our team will log in and connect these accounts for you. 
-          Account creation is a paid add-on if you don't have accounts yet.
-        </p>
       </div>
 
       {/* Platform List */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <div className="h-px flex-1 bg-border" />
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Your Platforms</span>
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Your Existing Accounts</span>
           <div className="h-px flex-1 bg-border" />
         </div>
         <p className="text-xs text-muted-foreground text-center">
-          Add credentials for each platform you want connected
+          Click on a platform to add your login credentials
         </p>
         <div className="grid gap-2">
           {allPlatforms.map(renderPlatformCard)}
