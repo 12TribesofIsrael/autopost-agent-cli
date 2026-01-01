@@ -1,7 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -33,7 +31,7 @@ const platformNames: Record<string, string> = {
 };
 
 const handler = async (req: Request): Promise<Response> => {
-  console.log("Workflow notification function invoked");
+  console.log("=== Workflow notification function invoked ===");
 
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -41,16 +39,21 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const data: WorkflowNotificationData = await req.json();
-    console.log("Received workflow data:", data);
+    const rawBody = await req.text();
+    console.log("Raw request body:", rawBody);
+    
+    const data: WorkflowNotificationData = JSON.parse(rawBody);
+    console.log("Parsed workflow data:", JSON.stringify(data, null, 2));
 
-    if (!Deno.env.get("RESEND_API_KEY")) {
+    const apiKey = Deno.env.get("RESEND_API_KEY");
+    if (!apiKey) {
       console.error("RESEND_API_KEY is not configured");
       return new Response(
         JSON.stringify({ error: "Email service not configured" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+    console.log("RESEND_API_KEY found, length:", apiKey.length);
 
     const sourceName = platformNames[data.sourcePlatform] || data.sourcePlatform;
     const destinationNames = data.destinations.map(d => platformNames[d] || d).join(', ');
@@ -100,13 +103,13 @@ const handler = async (req: Request): Promise<Response> => {
         </ol>
       `;
 
-    console.log("Sending workflow notification email...");
+    console.log("Sending workflow notification email to info@bornmadebosses.com...");
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         from: "BMB Notifications <onboarding@resend.dev>",
@@ -138,15 +141,25 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const emailResponse = await res.json();
+    console.log("Resend API response status:", res.status);
+    console.log("Email response:", JSON.stringify(emailResponse, null, 2));
 
-    console.log("Email sent successfully:", emailResponse);
+    if (!res.ok) {
+      console.error("Email sending failed:", emailResponse);
+      return new Response(
+        JSON.stringify({ success: false, error: emailResponse }),
+        { status: res.status, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
+    console.log("Email sent successfully!");
     return new Response(JSON.stringify({ success: true, emailResponse }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error: any) {
-    console.error("Error in send-workflow-notification:", error);
+    console.error("Error in send-workflow-notification:", error.message || error);
+    console.error("Stack trace:", error.stack);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }

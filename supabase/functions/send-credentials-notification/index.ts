@@ -73,7 +73,7 @@ const handler = async (req: Request): Promise<Response> => {
           </ul>
           
           <p>
-            <a href="https://growyourbrand.lovable.app/admin/credentials" 
+            <a href="https://bmbcontent.lovable.app/admin/credentials" 
                style="display: inline-block; padding: 12px 24px; background: #f97316; color: white; text-decoration: none; border-radius: 6px;">
               View All Credentials
             </a>
