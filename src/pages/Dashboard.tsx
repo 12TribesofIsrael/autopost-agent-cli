@@ -2,7 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { X, Sparkles, Plus, Settings, BarChart3, Video, Clock, LogOut, Loader2, Upload, ArrowRight, ExternalLink, CheckCircle2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { X, Sparkles, Plus, Settings, BarChart3, Video, Clock, LogOut, Loader2, Upload, ArrowRight, ExternalLink, CheckCircle2, ChevronDown, Users, KeyRound, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -126,12 +133,35 @@ export default function Dashboard() {
             </span>
           </Link>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="gap-2" asChild>
-              <Link to="/admin/beta">
-                <BarChart3 className="w-4 h-4" />
-                Admin
-              </Link>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  Admin
+                  <ChevronDown className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/dashboard" className="flex items-center gap-2 cursor-pointer">
+                    <LayoutDashboard className="w-4 h-4" />
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/beta" className="flex items-center gap-2 cursor-pointer">
+                    <Users className="w-4 h-4" />
+                    Beta Requests
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/admin/credentials" className="flex items-center gap-2 cursor-pointer">
+                    <KeyRound className="w-4 h-4" />
+                    Credentials
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="ghost" size="sm" className="gap-2">
               <Settings className="w-4 h-4" />
               Settings
